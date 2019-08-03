@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import mikejyg.smecli.CliLineReader.IllegalInputCharException;
+import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+
 /**
  * A text console does the following,
  * 
@@ -78,45 +81,22 @@ public class Cli {
 	private boolean initialLocalEcho;
 
 	private boolean continueOnError;
+
+	// command storage & indexes
 	
 	private Vector<CommandStruct> commands = new Vector<>();
 	
 	private Map<String, CommandStruct> cmdMap = new TreeMap<>();
 	
+	// for nested sessions
 	private Vector<CliSession> sessionStack = new Vector<>();
 	
 	///////////////////////////////////////////////////////////
 
-	protected String processEscapeSequences(String strIn) {
-		String str="";
-		for (int i=0; i<strIn.length(); i++) {
-			char c = strIn.charAt(i);
-			
-			if (c=='\\') {
-				if ( i+1 < strIn.length() ) {
-					char c1 = strIn.charAt(i+1);
-					if (c1=='\\') {
-						i++;		// skip the next \
-					}
-				}
-			}
-			
-			str += c;
-		}
-		
-		return str;
-	}
-	
 	/**
 	 * read a command, that includes a command name and a arguments string.
 	 * 
 	 * a command name consists of alphanumeric chars, and is separated from the arguments string by a white space. 
-	 *
-	 * the following is to support taking multiple lines as a single arguments string.
-	 * 
-	 * white spaces at both ends are trimmed.
-	 * \ at line end joins 2 lines, and turns into a space.
-	 * escape sequences \\ is supported. Any other \ sequences are ignored.
 	 *
 	 * results are in commandName and argumentsStr
 	 * 
@@ -124,39 +104,12 @@ public class Cli {
 	 * 
 	 * @throws IOException 
 	 * @throws EofException 
+	 * @throws UnexpectedEofException 
+	 * @throws IllegalInputCharException 
 	 * 
 	 */
-	protected CmdCallType readCmd() throws IOException, EofException {
-		String cmdLine=new String();
-		
-		boolean readNext = true;
-		
-		while (readNext) {
-			String line = getCurrentSession().getBufferedReader().readLine();
-			if (line==null)
-				throw new EofException();
-			
-			line.trim();
-			
-			if (line.isEmpty())
-				continue;
-			
-			line = processEscapeSequences(line);
-			
-			if (line.endsWith("\\")) {
-				// remove the ending \
-				line = line.substring(0, line.length()-1);
-			} else {
-				readNext = false;
-			}
-			
-			if (cmdLine.isEmpty()) {
-				cmdLine = line;
-			} else {
-				cmdLine = cmdLine + " " + line;
-			}
-			
-		}
+	protected CmdCallType readCmd() throws IOException, EofException, IllegalInputCharException, UnexpectedEofException {
+		String cmdLine=getCurrentSession().getCliLineReader().readCliLine();
 		
 		if (cmdLine.charAt(0)=='#') {
 			getCurrentSession().getPrintWriter().println(cmdLine);
@@ -200,24 +153,13 @@ public class Cli {
 			if (cliCmd==null)
 				continue;
 			
-			CommandStruct commandStruct=new CommandStruct();
-			
+			String commandName;
 			if (cliCmd.commandName().isEmpty())
-				commandStruct.commandName = method.getName();
+				commandName = method.getName();
 			else
-				commandStruct.commandName = cliCmd.commandName();
+				commandName = cliCmd.commandName();
 			
-			commandStruct.method = method;
-			commandStruct.shorthands = cliCmd.shorthands();
-			commandStruct.helpString = cliCmd.helpString();
-			commandStruct.cmdObj = cmdObj;
-			
-			commands.add(commandStruct);
-			cmdMap.put(commandStruct.commandName, commandStruct);
-			
-			for (String s : cliCmd.shorthands()) {
-				cmdMap.put(s, commandStruct);
-			}
+			addCommand(commandName, cliCmd.shorthands(), cliCmd.helpString(), cmdObj, method);
 		}
 
 	}
@@ -250,7 +192,25 @@ public class Cli {
 		addMethods(this);
 	}
 	
-	public void execAll(Reader reader, Writer writer) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException {
+	public void addCommand(String commandName, String shorthands[], String helpString, Object cmdObj, Method method) {
+		CommandStruct commandStruct=new CommandStruct();
+		
+		commandStruct.commandName = commandName;
+		commandStruct.shorthands = shorthands;
+		commandStruct.helpString = helpString;
+		commandStruct.cmdObj = cmdObj;
+		commandStruct.method = method;
+		
+		commands.add(commandStruct);
+		cmdMap.put(commandStruct.commandName, commandStruct);
+		
+		for (String s : shorthands) {
+			cmdMap.put(s, commandStruct);
+		}
+
+	}
+	
+	public void execAll(Reader reader, Writer writer) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException, IllegalInputCharException, UnexpectedEofException {
 		CliSession session = new CliSession(new BufferedReader(reader), new PrintWriter(writer), initialPrompt, initialLocalEcho);
 		sessionStack.add(session);
 		
@@ -266,8 +226,10 @@ public class Cli {
 	 * @throws InvocationTargetException 
 	 * @throws IllegalArgumentException 
 	 * @throws IllegalAccessException 
+	 * @throws UnexpectedEofException 
+	 * @throws IllegalInputCharException 
 	 */
-	public void execAll(CliSession session) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	public void execAll(CliSession session) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IllegalInputCharException, UnexpectedEofException {
 		while (!session.isExitFlag()) {
 			
 			if (session.getPrompt()!=null)

@@ -1,8 +1,8 @@
 package mikejyg.smecli;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
 
 /**
  * a session is tied to a pair of reader and writer.
@@ -11,7 +11,8 @@ import java.io.PrintWriter;
  *
  */
 public class CliSession {
-	private BufferedReader bufferedReader;
+	private CliLineReader cliLineReader;
+	
 	private PrintWriter printWriter;
 	
 	private String prompt;
@@ -23,9 +24,9 @@ public class CliSession {
 
 	/////////////////////////////////////////////////////
 	
-	public CliSession(BufferedReader bufferedReader, PrintWriter printWriter
+	public CliSession(Reader reader, PrintWriter printWriter
 			, String prompt, boolean localEcho) {
-		this.bufferedReader = bufferedReader;
+		cliLineReader = new CliLineReader(reader);
 		this.printWriter = printWriter;
 		this.prompt = prompt;
 		this.localEcho = localEcho;
@@ -39,10 +40,6 @@ public class CliSession {
 		this.exitFlag = exitFlag;
 	}
 
-	public BufferedReader getBufferedReader() {
-		return bufferedReader;
-	}
-
 	public String getPrompt() {
 		return prompt;
 	}
@@ -52,12 +49,15 @@ public class CliSession {
 	}
 
 	public void close() throws IOException {
-		bufferedReader.close();
 		printWriter.close();
 	}
 	
 	public PrintWriter getPrintWriter() {
 		return printWriter;
+	}
+
+	public CliLineReader getCliLineReader() {
+		return cliLineReader;
 	}
 
 	

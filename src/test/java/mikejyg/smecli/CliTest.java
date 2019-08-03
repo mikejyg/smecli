@@ -1,5 +1,6 @@
 package mikejyg.smecli;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -8,6 +9,9 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 //import java.io.File;
 //import java.io.PrintWriter;
@@ -44,40 +48,52 @@ public class CliTest {
 		String output = printToString( (ps)->{
 			try {
 				cli.execAll(reader, new OutputStreamWriter(ps));
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		});
 		
-		String goldenOutput="> help" + System.lineSeparator() + 
-				"help, ?	print help." + System.lineSeparator() + 
-				"echo	echo arguments." + System.lineSeparator() + 
-				"exit	exit current stream." + System.lineSeparator() + 
-				"OK." + System.lineSeparator() + 
-				"> ?" + System.lineSeparator() + 
-				"help, ?	print help." + System.lineSeparator() + 
-				"echo	echo arguments." + System.lineSeparator() + 
-				"exit	exit current stream." + System.lineSeparator() + 
-				"OK." + System.lineSeparator() + 
-				"> badCmd" + System.lineSeparator() + 
-				"INVALID_COMMAND" + System.lineSeparator() + 
-				"> echo abc def and \\n" + System.lineSeparator() + 
-				"abc def and \\n" + System.lineSeparator() + 
-				"OK." + System.lineSeparator() + 
-				"> exit" + System.lineSeparator() + 
-				"exit()..." + System.lineSeparator() + 
-				"OK." + System.lineSeparator();
+		String goldenOutput[]= { "> help" 
+				, "help, ?	print help."
+				, "exit	exit current stream."
+				, "echo	echo arguments."
+				, "OK."
+				, "> ?"
+				, "help, ?	print help."
+				, "exit	exit current stream."
+				, "echo	echo arguments."
+				, "OK."
+				, "> badCmd"
+				, "INVALID_COMMAND"
+				, "> echo abc def and \\n"
+				, "abc def and \\n"
+				, "OK."
+				, "> exit"
+				, "exit()..."
+				, "OK." };
 		
 //		PrintWriter golden = new PrintWriter(new File("golden.out"));
-//		golden.println(goldenOutput);
+//		Arrays.stream(goldenOutput).forEach(x->golden.println(x));
 //		golden.close();
 //		
 //		PrintWriter test = new PrintWriter(new File("test.out"));
 //		test.println(output);
 //		test.close();
 		
-		assert(goldenOutput.contentEquals(output));
+		Set<String> goldenSet = new HashSet<>(Arrays.asList(goldenOutput));
+		
+		Set<String> outputSet = new HashSet<>();
+		BufferedReader outputReader = new BufferedReader( new StringReader(output) );
+		while (true) {
+			String str = outputReader.readLine();
+			if (str!=null)
+				outputSet.add(str);
+			else
+				break;
+		}
+		
+		assert( goldenSet.equals(outputSet) );
 		
 	}
 	
