@@ -1,0 +1,10 @@
+command 1st line
+c2 2nd line \
+continued\ 
+   2nd done.
+quoted \"abc def\"
+quoted \"multi
+line \" 
+unspecial chars \\ \? \\ 
+regular quotes: "excellent!"
+all done.

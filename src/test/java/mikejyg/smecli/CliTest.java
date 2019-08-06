@@ -2,21 +2,24 @@ package mikejyg.smecli;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
-import java.io.StringReader;
-import java.lang.reflect.InvocationTargetException;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
-//import java.io.File;
-//import java.io.PrintWriter;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
+
+import mikejyg.smecli.Cli.ExitAllSessions;
+import mikejyg.smecli.CliLineReader.IllegalInputCharException;
+import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 
 public class CliTest {
 
@@ -29,68 +32,40 @@ public class CliTest {
 	}
 
 	@Test
-	public void test() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException {
+	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
+		
+		// build a CLI with a base module.
+		
 		Cli cli = new Cli();
-
+		CliBaseModule cliBaseModule = new CliBaseModule(cli);
+		CliAnnotation.addMethods(cli, cliBaseModule);
+		
 		cli.setPrompt("> ");
 		cli.setContinueOnError(true);
 		cli.setLocalEcho(true);
 
-		String commands = "help" + System.lineSeparator();
-		commands += "?" + System.lineSeparator();
-		commands += "badCmd" + System.lineSeparator();
-		commands += "echo abc\\" + System.lineSeparator();
-		commands += "def and \\" + "n" + System.lineSeparator();
-		commands += "exit";
-
-		Reader reader = new StringReader(commands);
+		final String outputFilename="cliTest.out";
 		
-		String output = printToString( (ps)->{
-			try {
-				cli.execAll(reader, new OutputStreamWriter(ps));
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		// execute commands from cliTestCommands.txt and write to test.out
+		
+		try ( Reader reader = new InputStreamReader( this.getClass().getResourceAsStream("/cliTestCommands.txt"), StandardCharsets.UTF_8 ) ) {
+			try ( Writer outputWriter = new OutputStreamWriter( new FileOutputStream(outputFilename), StandardCharsets.UTF_8) ) { 
+				cli.execAll(reader, outputWriter);
 			}
-		});
+		}
 		
-		String goldenOutput[]= { "> help" 
-				, "help, ?	print help."
-				, "exit	exit current stream."
-				, "echo	echo arguments."
-				, "OK."
-				, "> ?"
-				, "help, ?	print help."
-				, "exit	exit current stream."
-				, "echo	echo arguments."
-				, "OK."
-				, "> badCmd"
-				, "INVALID_COMMAND"
-				, "> echo abc def and \\n"
-				, "abc def and \\n"
-				, "OK."
-				, "> exit"
-				, "exit()..."
-				, "OK." };
+		// compare output against golden results
 		
-//		PrintWriter golden = new PrintWriter(new File("golden.out"));
-//		Arrays.stream(goldenOutput).forEach(x->golden.println(x));
-//		golden.close();
-//		
-//		PrintWriter test = new PrintWriter(new File("test.out"));
-//		test.println(output);
-//		test.close();
+		Set<String> goldenSet;
+		try ( BufferedReader goldenReader = new BufferedReader( 
+				new InputStreamReader( this.getClass().getResourceAsStream("/cliTestGolden.out"), StandardCharsets.UTF_8 ) ) ) {
+			goldenSet = goldenReader.lines().collect(Collectors.toSet());
+		}
 		
-		Set<String> goldenSet = new HashSet<>(Arrays.asList(goldenOutput));
-		
-		Set<String> outputSet = new HashSet<>();
-		BufferedReader outputReader = new BufferedReader( new StringReader(output) );
-		while (true) {
-			String str = outputReader.readLine();
-			if (str!=null)
-				outputSet.add(str);
-			else
-				break;
+		Set<String> outputSet;
+		try ( BufferedReader outputReader = new BufferedReader( 
+				new InputStreamReader( new FileInputStream(outputFilename), StandardCharsets.UTF_8 ) ) ) {
+			outputSet = outputReader.lines().collect(Collectors.toSet());
 		}
 		
 		assert( goldenSet.equals(outputSet) );

@@ -5,13 +5,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
+import java.util.function.Function;
 
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
@@ -25,8 +22,6 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  * 4. output command result.
  * 5. based on the return code, take the next action. 
  * 
- * CLI has its own set of built-in commands.
- * 
  * modularity: command executors are modules, and can be added or removed at run-time.
  * 
  * extendability: CLI can be extended to change or expand its functionalities.
@@ -35,30 +30,20 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  *
  */
 public class Cli {
-	/**
-	 * a commandName function is of the form: CmdReturnType commandName(String argumentsStr)
-	 *  
-	 * @param argumentsStr	a string contains device specific arguments... 
-	 * @return
-	 */
-	@Retention(RetentionPolicy.RUNTIME)
-	public @interface CliCommand {
-		String commandName() default "";	// when default, use the function name.
-		String [] shorthands() default {};
-		String helpString() default "";
-	}
-	
 	static public class EofException extends Exception {
 		private static final long serialVersionUID = 1L;
 	};
+	
+	static public class ExitAllSessions extends Exception {
+		private static final long serialVersionUID = 1L;
+	}
 	
 	static class CommandStruct {
 		String commandName;
 		String [] shorthands;
 		String helpString;
-		
-		Object cmdObj;
-		Method method;
+
+		Function<CmdCallType, CmdReturnType> cmdFunc;
 		
 		@Override
 		public String toString() {
@@ -130,38 +115,16 @@ public class Cli {
 	
 	/**
 	 *
-	 * @return true if continue, otherwise exit.
-	 * @throws InvocationTargetException 
-	 * @throws IllegalArgumentException 
-	 * @throws IllegalAccessException 
+	 * @return null if the command was not invoked successfully, otherwise a return from the function.
 	 */
-	protected CmdReturnType execCmd(CmdCallType cmdCall) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	protected CmdReturnType execCmd(CmdCallType cmdCall)  {
 		CommandStruct cmdStruct = cmdMap.get(cmdCall.commandName);
 		
 		if (cmdStruct==null) {
 			return new CmdReturnType(ReturnCode.INVALID_COMMAND);
 		}
 		
-		return (CmdReturnType) cmdStruct.method.invoke(cmdStruct.cmdObj, cmdCall.argumentsStr);
-	}
-	
-	protected void addMethods(Object cmdObj) {
-		Method [] methods = cmdObj.getClass().getMethods();
-		
-		for (Method method : methods) {
-			CliCommand cliCmd = method.getAnnotation(CliCommand.class);
-			if (cliCmd==null)
-				continue;
-			
-			String commandName;
-			if (cliCmd.commandName().isEmpty())
-				commandName = method.getName();
-			else
-				commandName = cliCmd.commandName();
-			
-			addCommand(commandName, cliCmd.shorthands(), cliCmd.helpString(), cmdObj, method);
-		}
-
+		return cmdStruct.cmdFunc.apply(cmdCall);
 	}
 	
 	/**
@@ -187,19 +150,15 @@ public class Cli {
 	
 	///////////////////////////////////////////////////////////
 	
-	public Cli() {
-		// init built-in commands
-		addMethods(this);
-	}
+	public Cli() {}
 	
-	public void addCommand(String commandName, String shorthands[], String helpString, Object cmdObj, Method method) {
+	public void addCommand(String commandName, String shorthands[], String helpString, Function<CmdCallType, CmdReturnType> cmdFunc) {
 		CommandStruct commandStruct=new CommandStruct();
 		
 		commandStruct.commandName = commandName;
 		commandStruct.shorthands = shorthands;
 		commandStruct.helpString = helpString;
-		commandStruct.cmdObj = cmdObj;
-		commandStruct.method = method;
+		commandStruct.cmdFunc = cmdFunc;
 		
 		commands.add(commandStruct);
 		cmdMap.put(commandStruct.commandName, commandStruct);
@@ -210,26 +169,33 @@ public class Cli {
 
 	}
 	
-	public void execAll(Reader reader, Writer writer) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException, IllegalInputCharException, UnexpectedEofException {
-		CliSession session = new CliSession(new BufferedReader(reader), new PrintWriter(writer), initialPrompt, initialLocalEcho);
+	public CmdReturnType execAll(Reader reader, PrintWriter printWriter) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
+		CliSession session = new CliSession(new BufferedReader(reader), printWriter, initialPrompt, initialLocalEcho);
 		sessionStack.add(session);
 		
-		execAll(getCurrentSession());
+		CmdReturnType cmdReturnType = execAll(getCurrentSession());
 		
-		getCurrentSession().close();
 		sessionStack.remove(sessionStack.size()-1);
+
+		return cmdReturnType;
+	}
+	
+	public CmdReturnType execAll(Reader reader, Writer writer) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
+		return execAll(reader, new PrintWriter(writer));
 	}
 	
 	/**
 	 * execute all commands from the reader.
 	 * @throws IOException 
-	 * @throws InvocationTargetException 
-	 * @throws IllegalArgumentException 
-	 * @throws IllegalAccessException 
 	 * @throws UnexpectedEofException 
 	 * @throws IllegalInputCharException 
+	 * @throws ExitAllSessions 
+	 * 
+	 * @return the return of the last command
 	 */
-	public void execAll(CliSession session) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IllegalInputCharException, UnexpectedEofException {
+	protected CmdReturnType execAll(CliSession session) throws IOException, UnexpectedEofException, IllegalInputCharException, ExitAllSessions {
+		CmdReturnType cmdReturn=null;
+		
 		while (!session.isExitFlag()) {
 			
 			if (session.getPrompt()!=null)
@@ -249,34 +215,19 @@ public class Cli {
 			if (session.isLocalEcho())
 				session.getPrintWriter().println(cmdCall.toString());
 			
-			CmdReturnType cmdReturn = execCmd(cmdCall);
+			cmdReturn = execCmd(cmdCall);
+
+			if (session.isEndFlag())
+				throw new ExitAllSessions();
 			
+			if (cmdReturn==null)
+				throw new RuntimeException("failed to invoke: " + cmdCall);
+				
 			if ( ! processResults(cmdReturn) )
 				break;
 		}
-	}
-	
-	@CliCommand(shorthands = {"?"}, helpString = "print help.")
-	public CmdReturnType help(String argumentsStr) {
-		for (CommandStruct cmd : commands) {
-			getCurrentSession().getPrintWriter().println(cmd.toString());
-		}
-		return new CmdReturnType(ReturnCode.SUCCESS);
-	}
-	
-	@CliCommand(helpString = "echo arguments.")
-	public CmdReturnType echo(String argumentsStr) {
-		getCurrentSession().getPrintWriter().println(argumentsStr);
-		return new CmdReturnType(ReturnCode.SUCCESS);
-	}
-	
-	@CliCommand(commandName="exit", helpString = "exit current stream.")
-	public CmdReturnType exitSession(String argumentsStr) {
-		getCurrentSession().getPrintWriter().println("exit()...");
 		
-		getCurrentSession().setExitFlag(true);
-		
-		return new CmdReturnType(ReturnCode.SUCCESS);
+		return cmdReturn;
 	}
 	
 	public void setContinueOnError(boolean continueOnError) {
@@ -295,5 +246,9 @@ public class Cli {
 		return sessionStack.lastElement();
 	}
 	
+	public Vector<CommandStruct> getCommands() {
+		return commands;
+	}
+
 	
 }

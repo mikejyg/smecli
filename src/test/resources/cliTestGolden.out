@@ -1,0 +1,30 @@
+> help
+help, ?	print help.
+end	exit current session and all parent sessions.
+source, .	parameter: script_filename	execute the script file in a new session.
+exit	exit current session.
+echo	echo arguments.
+OK.
+> ?
+help, ?	print help.
+end	exit current session and all parent sessions.
+source, .	parameter: script_filename	execute the script file in a new session.
+exit	exit current session.
+echo	echo arguments.
+OK.
+> badCmd
+INVALID_COMMAND
+> echo abc def and \n
+abc def and \n
+OK.
+> . /cliTestSubscript.txt
+executing /cliTestSubscript.txt...
+> echo from a sub-script
+from a sub-script
+OK.
+> EOF - exiting...
+/cliTestSubscript.txt execution done.
+OK.
+> exit
+exit()...
+OK.

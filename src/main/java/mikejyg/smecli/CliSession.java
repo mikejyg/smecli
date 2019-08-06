@@ -1,6 +1,5 @@
 package mikejyg.smecli;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
 
@@ -22,6 +21,8 @@ public class CliSession {
 	// working variables
 	private boolean exitFlag;
 
+	private boolean endFlag;	// exit all (nested) sessions.
+	
 	/////////////////////////////////////////////////////
 	
 	public CliSession(Reader reader, PrintWriter printWriter
@@ -48,16 +49,20 @@ public class CliSession {
 		return localEcho;
 	}
 
-	public void close() throws IOException {
-		printWriter.close();
-	}
-	
 	public PrintWriter getPrintWriter() {
 		return printWriter;
 	}
 
 	public CliLineReader getCliLineReader() {
 		return cliLineReader;
+	}
+
+	public boolean isEndFlag() {
+		return endFlag;
+	}
+
+	public void setEndFlag(boolean endFlag) {
+		this.endFlag = endFlag;
 	}
 
 	
