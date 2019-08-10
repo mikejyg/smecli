@@ -7,7 +7,7 @@ package mikejyg.smecli;
  * @author jgu
  *
  */
-enum ReturnCode {
+public enum ReturnCode {
 	SUCCESS,
 	INVALID_COMMAND,
 	INVALID_ARGUMENT,
