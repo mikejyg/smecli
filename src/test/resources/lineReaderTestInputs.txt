@@ -1,10 +1,8 @@
 command 1st line
-c2 2nd line \
-continued\ 
-   2nd done.
-quoted \"abc def\"
-quoted \"multi
-line \" 
+c2 2nd \"line
+continued 
+   2nd done.\"
+quoted \"abc def\" end quote
 unspecial chars \\ \? \\ 
-regular quotes: "excellent!"
+regular quotes: "excellent!" user's \\" \\"
 all done.

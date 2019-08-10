@@ -16,11 +16,10 @@ public class CliLineReaderTest {
 	public void test() throws IOException, EofException, IllegalInputCharException, UnexpectedEofException {
 		String golden[]= {
 				"command 1st line",
-				"c2 2nd line  continued 2nd done.",
-				"quoted abc def",
-				"quoted multi\nline",
-				"unspecial chars \\ \\? \\",
-				"regular quotes: \"excellent!\"",
+				"c2 2nd line\ncontinued \n   2nd done.",
+				"quoted abc def end quote",
+				"unspecial chars \\\\ \\? \\\\",
+				"regular quotes: \"excellent!\" user's \\\" \\\"",
 				"all done."
 		};
 		
@@ -36,10 +35,12 @@ public class CliLineReaderTest {
 					break;
 				}
 
-				assert( golden[cnt].contentEquals(cliLine) );
-
-				System.out.print(cnt++);
+				System.out.print(cnt);
 				System.out.println( ": " + cliLine );
+				
+				assert( golden[cnt].contentEquals(cliLine) );
+				
+				cnt++;
 			}
 		
 		}

@@ -2,20 +2,22 @@
 help, ?	print help.
 end	exit current session and all parent sessions.
 source, .	parameter: script_filename	execute the script file in a new session.
-exit	exit current session.
 echo	echo arguments.
+exit	exit current session.
 OK.
 > ?
 help, ?	print help.
 end	exit current session and all parent sessions.
 source, .	parameter: script_filename	execute the script file in a new session.
-exit	exit current session.
 echo	echo arguments.
+exit	exit current session.
 OK.
 > badCmd
 INVALID_COMMAND
-> echo abc def and \n
-abc def and \n
+> echo abc
+def and \n
+abc
+def and \n
 OK.
 > . /cliTestSubscript.txt
 executing /cliTestSubscript.txt...

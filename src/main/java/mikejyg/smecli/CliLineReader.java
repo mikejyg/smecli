@@ -13,13 +13,16 @@ import mikejyg.smecli.Cli.EofException;
  * 
  * The following mechanism is to pass multiple input lines into a single CLI line.
 
- * The character sequence \\ becomes the regular \ with no special meaning.
- *
- * 1. the quotation character sequence: \"
- *   It denotes quoted text, everything within is copied verbatim, except the sequence \\ and the end of line \.
+ * 1. The quotation character sequence: \"
+ *   It denotes quoted text, everything within is copied verbatim, except the character sequence \" and \\" (see below).
  * 
- * 2. The end of line \ is for joining the next line, with a space inserted in place of the line break.
- * 	Note: any white spaces between \ and end of line are ignored, and it is still an end of line \.
+ * 2. All sequences of \\" is changed to \".
+ * 
+ * So, to quote user inputs, the following steps are taken,
+ * 
+ * 1. Change all character sequences of \" to \\".
+ * 
+ * 2. Add \" at both ends. 
  *
  * For cross-platform compatibility,
  * 	The newline character will be LF (\n).
@@ -51,11 +54,6 @@ public class CliLineReader {
 	 */
 	private static final char QUOTE_CHAR = 0x01;
 	
-	/**
-	 * the special symbol for continue on next line is mapped to 0x02;
-	 */
-	private static final char CONT_NEXT_LINE_CHAR = 0x02;
-	
 	private Reader reader;
 	
 	// working variables
@@ -63,7 +61,6 @@ public class CliLineReader {
 	StringBuilder cliLineBuilder;
 	
 	boolean withinQuotes;
-	boolean continueNextLine;
 	
 	boolean eofFlag;
 	
@@ -124,8 +121,7 @@ public class CliLineReader {
 	/**
 	 * transform
 	 * 1. the quote escape sequence \" to the special character space.
-	 * 2. the end of line \ to the special character
-	 * 3. \\ to \
+	 * 2. the escaped sequence \\" to \".
 	 * 
 	 * @param inputLine
 	 * @throws IllegalInputCharException 
@@ -135,36 +131,15 @@ public class CliLineReader {
 		for (int i=0; i<inputLine.length(); i++) {
 			char c = inputLine.charAt(i);
 			
+			// check whether it is \" or \\"
 			if (c=='\\') {
-				if (i+1 >= inputLine.length()) {	// \ at end of line
-					c = CONT_NEXT_LINE_CHAR;
-					
-				} else {
-					char c1 = inputLine.charAt(i+1);
-					
-					if ( c1 == '\"' ) {		// quote
-						i++;			// skip the quote character
-						c = QUOTE_CHAR;
-						
-					} else if ( c1 == '\\' )	{ // \
-						i++;			// skip the extra \ 
-					
-					} else {
-						// look ahead to see if this is the end of line \
-						int pos2 = i+1;
-						while ( pos2 < inputLine.length() ) {
-							c1 = inputLine.charAt(pos2);
-							if ( ! Character.isWhitespace(c1) )
-								break;
-							pos2++;
-						}
-						if (pos2==inputLine.length()) {
-							// this is an end of line joiner
-							c = CONT_NEXT_LINE_CHAR;
-							i = inputLine.length();
-						}
-					}
-				}
+				if ( i+1 < inputLine.length() && inputLine.charAt(i+1)=='\"' ) {	// \" to QUOTE_CHAR
+					i++;	// skip the quote character
+					c = QUOTE_CHAR;
+
+				} else if (i+2 < inputLine.length() 
+						&& inputLine.charAt(i+1)=='\\' && inputLine.charAt(i+2)=='\"' )	// \\" to \"
+					i++;			// skip the next \
 			}
 			
 			stringBuilder.append(c);
@@ -185,11 +160,7 @@ public class CliLineReader {
 			if (c==QUOTE_CHAR) { // begin of quote
 				// set quote flag and exit
 				withinQuotes=true;
-				return;			
-					
-			} else if ( c == CONT_NEXT_LINE_CHAR ) {	// end of line joiner
-				continueNextLine = true;
-				break;
+				break;			
 			}
 					
 			cliLineBuilder.append(c);
@@ -208,18 +179,10 @@ public class CliLineReader {
 			if ( c == QUOTE_CHAR ) {	// end of quote
 				// release quote flag and exit
 				withinQuotes=false;
-				return;
-				
-			} else if ( c == CONT_NEXT_LINE_CHAR ) {
-				continueNextLine = true;
-				break;
+				break;	
 			}
 			
 			cliLineBuilder.append(c);
-		}
-		
-		if (!continueNextLine) { // end of line, add line break
-			cliLineBuilder.append('\n');
 		}
 	}
 	
@@ -237,11 +200,7 @@ public class CliLineReader {
 		cliLineBuilder=new StringBuilder();
 		withinQuotes = false;
 		
-		continueNextLine = true;
-		
-		while ( ( withinQuotes || continueNextLine ) && !eofFlag ) {
-			continueNextLine = false;
-			
+		do {
 			inputLine = readInputLine();
 			
 			if ( inputLine.isEmpty() && eofFlag ) {
@@ -266,9 +225,9 @@ public class CliLineReader {
 				}	
 			}
 			
-			// use a space in place of the line break
-			if ( !withinQuotes && cliLineBuilder.length()!=0)
-				cliLineBuilder.append(' ');
+			// add back the consumed line break LF
+			if ( cliLineBuilder.length() != 0 )
+				cliLineBuilder.append('\n');
 			
 			while ( pos < inputLine.length() ) {
 				if ( withinQuotes ) {
@@ -278,7 +237,7 @@ public class CliLineReader {
 				}
 			}
 			
-		}
+		} while ( withinQuotes && !eofFlag ); 
 		
 		return cliLineBuilder.toString().trim();
 		
