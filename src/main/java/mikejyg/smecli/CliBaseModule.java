@@ -28,6 +28,8 @@ public class CliBaseModule {
 	
 	///////////////////////////////////////////////////////////////
 	
+	public CliBaseModule() {}
+	
 	public CliBaseModule(Cli cli) {
 		this.cli = cli;
 
@@ -35,35 +37,39 @@ public class CliBaseModule {
 //		CliAnnotation.addMethods(cli, this);
 	}
 	
+	public void setCli(Cli cli) {
+		this.cli = cli;
+	}
+	
 	@CliCommand(shorthands = {"?"}, helpString = "print help.")
 	public CmdReturnType help(CmdCallType cmdCall) {
 		for (CommandStruct cmd : cli.getCommands()) {
-			cli.getCurrentSession().getPrintWriter().println(cmd.toString());
+			cli.getPrintWriter().println(cmd.toString());
 		}
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
 	
 	@CliCommand(helpString = "echo arguments.")
 	public CmdReturnType echo(CmdCallType cmdCall) {
-		cli.getCurrentSession().getPrintWriter().println(cmdCall.argumentsStr);
+		cli.getPrintWriter().println(cmdCall.argumentsStr);
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
 	
 	@CliCommand(commandName="exit", helpString = "exit current session.")
 	public CmdReturnType exitSession(CmdCallType cmdCall) {
-		cli.getCurrentSession().getPrintWriter().println("exit()...");
+		cli.getPrintWriter().println("exit()...");
 		
-		cli.getCurrentSession().setExitFlag(true);
+		cli.setExitFlag(true);
 		
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
 
 	@CliCommand(helpString = "exit current session and all parent sessions.")
 	public CmdReturnType end(CmdCallType cmdCall) {
-		cli.getCurrentSession().getPrintWriter().println("exit()...");
+		cli.getPrintWriter().println("exit()...");
 		
-		cli.getCurrentSession().setExitFlag(true);
-		cli.getCurrentSession().setEndFlag(true);
+		cli.setExitFlag(true);
+		cli.setEndFlag(true);
 		
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
@@ -94,14 +100,14 @@ public class CliBaseModule {
 		
 		String filename = args[0];
 		
-		cli.getCurrentSession().getPrintWriter().println("executing " + filename + "...");
+		cli.getPrintWriter().println("executing " + filename + "...");
 		
 		CmdReturnType cmdReturn;
 		try ( Reader reader = new InputStreamReader( this.getClass().getResourceAsStream(filename), StandardCharsets.UTF_8 ) ) {
-			cmdReturn = cli.execAll(reader, cli.getCurrentSession().getPrintWriter());
+			cmdReturn = cli.execAll(reader, cli.getPrintWriter());
 		}
 		
-		cli.getCurrentSession().getPrintWriter().println(filename + " execution done.");
+		cli.getPrintWriter().println(filename + " execution done.");
 		return cmdReturn;
 		
 	}

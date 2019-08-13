@@ -38,6 +38,10 @@ public class Cli {
 		private static final long serialVersionUID = 1L;
 	}
 	
+	static public class InvokeCommandFailed extends Exception {
+		private static final long serialVersionUID = 1L;
+	}
+	
 	static class CommandStruct {
 		String commandName;
 		String [] shorthands;
@@ -79,52 +83,34 @@ public class Cli {
 	///////////////////////////////////////////////////////////
 
 	/**
-	 * read a command, that includes a command name and a arguments string.
-	 * 
-	 * a command name consists of alphanumeric chars, and is separated from the arguments string by a white space. 
-	 *
-	 * results are in commandName and argumentsStr
-	 * 
-	 * @return true if a command is read successfully, false otherwise.
-	 * 
-	 * @throws IOException 
-	 * @throws EofException 
-	 * @throws UnexpectedEofException 
-	 * @throws IllegalInputCharException 
-	 * 
+	 * @throws InvokeCommandFailed
+	 * @Return not null.
 	 */
-	protected CmdCallType readCmd() throws IOException, EofException, IllegalInputCharException, UnexpectedEofException {
-		String cmdLine=getCurrentSession().getCliLineReader().readCliLine();
-		
-		if (cmdLine.charAt(0)=='#') {
-			getCurrentSession().getPrintWriter().println(cmdLine);
-			return null;
-		}
-		
-		CmdCallType cmdCall;
-		
-		int k = cmdLine.indexOf(' ');
-		if (k==-1) {
-			cmdCall = new CmdCallType(cmdLine, "");
-		} else {
-			cmdCall = new CmdCallType( cmdLine.substring(0, k).trim(), cmdLine.substring(k+1).trim() );
-		}
-		
-		return cmdCall;
-	}
-	
-	/**
-	 *
-	 * @return null if the command was not invoked successfully, otherwise a return from the function.
-	 */
-	protected CmdReturnType execCmd(CmdCallType cmdCall)  {
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed  {
 		CommandStruct cmdStruct = cmdMap.get(cmdCall.commandName);
 		
 		if (cmdStruct==null) {
 			return new CmdReturnType(ReturnCode.INVALID_COMMAND);
 		}
 		
-		return cmdStruct.cmdFunc.apply(cmdCall);
+		CmdReturnType cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
+		
+		if (cmdReturn==null)
+			throw new InvokeCommandFailed();
+		
+		return cmdReturn;
+	}
+	
+	/** 
+	 * @param cmdLine
+	 * @return null, if cmdLins is null, or no command is found in the cmdLine.
+	 * @throws InvokeCommandFailed 
+	 */
+	public CmdReturnType execCmd(String cmdLine) throws InvokeCommandFailed {
+		CmdCallType cmdCall = CmdCallType.toCmdCall(cmdLine);
+		if (cmdCall==null)
+			return null;
+		return execCmd(cmdCall);
 	}
 	
 	/**
@@ -198,31 +184,40 @@ public class Cli {
 		
 		while (!session.isExitFlag()) {
 			
-			if (session.getPrompt()!=null)
+			if (session.getPrompt()!=null) {
 				session.getPrintWriter().print(session.getPrompt());
+				session.getPrintWriter().flush();
+			}
 			
-			CmdCallType cmdCall;
+			String cmdLine;
 			try {
-				cmdCall = readCmd();
+				cmdLine=getCurrentSession().getCliLineReader().readCliLine();
+				
 			} catch (EofException e) {
 				session.getPrintWriter().println("EOF - exiting...");
 				break;
 			}
 			
-			if (cmdCall==null)
-				continue;
-				
 			if (session.isLocalEcho())
-				session.getPrintWriter().println(cmdCall.toString());
+				session.getPrintWriter().println(cmdLine);
 			
-			cmdReturn = execCmd(cmdCall);
+			if (cmdLine.charAt(0)=='#') {
+				getCurrentSession().getPrintWriter().println(cmdLine);
+				continue;
+			}
+			
+			try {
+				cmdReturn = execCmd(cmdLine);
+			} catch (InvokeCommandFailed e) {
+				throw new RuntimeException("failed to invoke: " + cmdLine);
+			}
 
+			if (cmdReturn==null)	// no command is executed.
+				continue;
+			
 			if (session.isEndFlag())
 				throw new ExitAllSessions();
 			
-			if (cmdReturn==null)
-				throw new RuntimeException("failed to invoke: " + cmdCall);
-				
 			if ( ! processResults(cmdReturn) )
 				break;
 		}
@@ -230,25 +225,52 @@ public class Cli {
 		return cmdReturn;
 	}
 	
+	/**
+	 * the option of whether to continue in case of error.
+	 * @param continueOnError
+	 */
 	public void setContinueOnError(boolean continueOnError) {
 		this.continueOnError = continueOnError;
 	}
 
+	/**
+	 * whether to echo the command that is read. This is useful in script execution mode.
+	 * @param localEcho
+	 */
 	public void setLocalEcho(boolean localEcho) {
 		this.initialLocalEcho = localEcho;
 	}
 
+	/**
+	 * Set the prompt. If it is set to null, then prompt is disabled. 
+	 * @param prompt
+	 */
 	public void setPrompt(String prompt) {
 		this.initialPrompt = prompt;
 	}
 
-	public CliSession getCurrentSession() {
+	protected CliSession getCurrentSession() {
 		return sessionStack.lastElement();
 	}
 	
+	/**
+	 * return the list of available commands.
+	 * @return
+	 */
 	public Vector<CommandStruct> getCommands() {
 		return commands;
 	}
 
+	public PrintWriter getPrintWriter() {
+		return getCurrentSession().getPrintWriter();
+	}
 	
-}
+	public void setExitFlag(boolean exitFlag) {
+		getCurrentSession().setExitFlag(exitFlag);
+	}
+	
+	public void setEndFlag(boolean endFlag) {
+		getCurrentSession().setEndFlag(endFlag);
+	}
+	
+}	

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -72,5 +73,15 @@ public class CliTest {
 		
 	}
 	
+	public static void main(String[] args) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
+		Cli cli = new Cli();
+		CliBaseModule cliBaseModule = new CliBaseModule(cli);
+		CliAnnotation.addMethods(cli, cliBaseModule);
+		
+		cli.setPrompt("> ");
+		cli.setContinueOnError(true);
+		cli.execAll(new InputStreamReader(System.in), new PrintWriter(System.out));
+		
+	}
 	
 }

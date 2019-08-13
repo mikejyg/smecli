@@ -23,7 +23,7 @@ public class CliLineReaderTest {
 				"all done."
 		};
 		
-		try ( Reader inputReader = new InputStreamReader( this.getClass().getResourceAsStream("/linereaderTestInputs.txt")) ) {
+		try ( Reader inputReader = new InputStreamReader( this.getClass().getResourceAsStream("/lineReaderTestInputs.txt")) ) {
 			CliLineReader cliLineReader = new CliLineReader( inputReader );
 		
 			int cnt=0;
