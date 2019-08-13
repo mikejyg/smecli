@@ -15,22 +15,22 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 /**
  * It is named CliAdapter for lack of a better name.
  * 
- * It provides some basic commands and functionalities to the Cli class.
+ * It provides some basic commands and functionalities to the CliBase class.
  * 
  * It uses annotation to add commands.
  * 
  * @author jgu
  *
  */
-public class CliBaseModule {
+public class CliAdapter {
 	
 	private CliBase cli;
 	
 	///////////////////////////////////////////////////////////////
 	
-	public CliBaseModule() {}
+	public CliAdapter() {}
 	
-	public CliBaseModule(CliBase cli) {
+	public CliAdapter(CliBase cli) {
 		this.cli = cli;
 
 		// uses the following to add commands to CLI.
