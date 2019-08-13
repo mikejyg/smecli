@@ -6,8 +6,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
-import mikejyg.smecli.Cli.CommandStruct;
-import mikejyg.smecli.Cli.ExitAllSessions;
+import mikejyg.smecli.CliBase.CommandStruct;
+import mikejyg.smecli.CliBase.ExitAllSessions;
 import mikejyg.smecli.CliAnnotation.CliCommand;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
@@ -24,20 +24,20 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  */
 public class CliBaseModule {
 	
-	private Cli cli;
+	private CliBase cli;
 	
 	///////////////////////////////////////////////////////////////
 	
 	public CliBaseModule() {}
 	
-	public CliBaseModule(Cli cli) {
+	public CliBaseModule(CliBase cli) {
 		this.cli = cli;
 
 		// uses the following to add commands to CLI.
 //		CliAnnotation.addMethods(cli, this);
 	}
 	
-	public void setCli(Cli cli) {
+	public void setCli(CliBase cli) {
 		this.cli = cli;
 	}
 	

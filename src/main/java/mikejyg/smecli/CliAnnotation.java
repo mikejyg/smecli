@@ -25,7 +25,7 @@ public class CliAnnotation {
 		String helpString() default "";
 	}
 	
-	static public void addMethods(Cli cli, Object cmdObj) {
+	static public void addMethods(CliBase cli, Object cmdObj) {
 		Method [] methods = cmdObj.getClass().getMethods();
 		
 		for (Method method : methods) {

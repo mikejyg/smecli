@@ -3,7 +3,7 @@ package mikejyg.smecli;
 import java.io.IOException;
 import java.io.Reader;
 
-import mikejyg.smecli.Cli.EofException;
+import mikejyg.smecli.CliBase.EofException;
 
 /**
  * This class is for reading an CLI line from a buffered reader.

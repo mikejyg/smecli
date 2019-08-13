@@ -17,7 +17,7 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  * A text console does the following,
  * 
  * 1. read an input item one at a time, and
- * 2. parse the input itme into a command name, and a arguments string, and
+ * 2. parse the input item into a command name, and a arguments string, and
  * 3. call the corresponding command executor to execute the command.
  * 4. output command result.
  * 5. based on the return code, take the next action. 
@@ -29,7 +29,7 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  * @author jgu
  *
  */
-public class Cli {
+public class CliBase {
 	static public class EofException extends Exception {
 		private static final long serialVersionUID = 1L;
 	};
@@ -136,7 +136,7 @@ public class Cli {
 	
 	///////////////////////////////////////////////////////////
 	
-	public Cli() {}
+	public CliBase() {}
 	
 	public void addCommand(String commandName, String shorthands[], String helpString, Function<CmdCallType, CmdReturnType> cmdFunc) {
 		CommandStruct commandStruct=new CommandStruct();

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import mikejyg.smecli.Cli.ExitAllSessions;
+import mikejyg.smecli.CliBase.ExitAllSessions;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 
@@ -37,7 +37,7 @@ public class CliTest {
 		
 		// build a CLI with a base module.
 		
-		Cli cli = new Cli();
+		CliBase cli = new CliBase();
 		CliBaseModule cliBaseModule = new CliBaseModule(cli);
 		CliAnnotation.addMethods(cli, cliBaseModule);
 		
@@ -74,7 +74,7 @@ public class CliTest {
 	}
 	
 	public static void main(String[] args) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
-		Cli cli = new Cli();
+		CliBase cli = new CliBase();
 		CliBaseModule cliBaseModule = new CliBaseModule(cli);
 		CliAnnotation.addMethods(cli, cliBaseModule);
 		

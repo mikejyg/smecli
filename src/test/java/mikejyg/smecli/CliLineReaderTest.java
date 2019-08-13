@@ -6,7 +6,7 @@ import java.io.Reader;
 
 import org.junit.Test;
 
-import mikejyg.smecli.Cli.EofException;
+import mikejyg.smecli.CliBase.EofException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 
