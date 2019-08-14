@@ -6,9 +6,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
-import mikejyg.smecli.CliBase.CommandStruct;
-import mikejyg.smecli.CliBase.ExitAllSessions;
-import mikejyg.smecli.CliAnnotation.CliCommand;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 
@@ -21,55 +18,42 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  * 
  * @author jgu
  *
+ * uses the following to add commands to CLI.
+ *		addMethods(cliAdapter);
  */
-public class CliAdapter {
-	
-	private CliBase cli;
-	
-	///////////////////////////////////////////////////////////////
+public class CliAdapter extends CliAnnotation {
 	
 	public CliAdapter() {}
 	
-	public CliAdapter(CliBase cli) {
-		this.cli = cli;
-
-		// uses the following to add commands to CLI.
-//		CliAnnotation.addMethods(cli, this);
-	}
-	
-	public void setCli(CliBase cli) {
-		this.cli = cli;
-	}
-	
 	@CliCommand(shorthands = {"?"}, helpString = "print help.")
 	public CmdReturnType help(CmdCallType cmdCall) {
-		for (CommandStruct cmd : cli.getCommands()) {
-			cli.getPrintWriter().println(cmd.toString());
+		for (CommandStruct cmd : getCommands()) {
+			getPrintWriter().println(cmd.toString());
 		}
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
 	
 	@CliCommand(helpString = "echo arguments.")
 	public CmdReturnType echo(CmdCallType cmdCall) {
-		cli.getPrintWriter().println(cmdCall.argumentsStr);
+		getPrintWriter().println(cmdCall.argumentsStr);
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
 	
 	@CliCommand(commandName="exit", helpString = "exit current session.")
 	public CmdReturnType exitSession(CmdCallType cmdCall) {
-		cli.getPrintWriter().println("exit()...");
+		getPrintWriter().println("exit()...");
 		
-		cli.setExitFlag(true);
+		setExitFlag(true);
 		
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
 
 	@CliCommand(helpString = "exit current session and all parent sessions.")
 	public CmdReturnType end(CmdCallType cmdCall) {
-		cli.getPrintWriter().println("exit()...");
+		getPrintWriter().println("exit()...");
 		
-		cli.setExitFlag(true);
-		cli.setEndFlag(true);
+		setExitFlag(true);
+		setEndFlag(true);
 		
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
@@ -100,17 +84,18 @@ public class CliAdapter {
 		
 		String filename = args[0];
 		
-		cli.getPrintWriter().println("executing " + filename + "...");
+		getPrintWriter().println("executing " + filename + "...");
 		
 		CmdReturnType cmdReturn;
 		try ( Reader reader = new InputStreamReader( this.getClass().getResourceAsStream(filename), StandardCharsets.UTF_8 ) ) {
-			cmdReturn = cli.execAll(reader, cli.getPrintWriter());
+			cmdReturn = execAll(reader, getPrintWriter());
 		}
 		
-		cli.getPrintWriter().println(filename + " execution done.");
+		getPrintWriter().println(filename + " execution done.");
 		return cmdReturn;
 		
 	}
 	
 	
 }
+

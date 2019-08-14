@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
  * @author jgu
  *
  */
-public class CliAnnotation {
+public class CliAnnotation extends CliBase {
 	/**
 	 * a commandName function is of the form: CmdReturnType commandName(String argumentsStr)
 	 *  
@@ -25,7 +25,7 @@ public class CliAnnotation {
 		String helpString() default "";
 	}
 	
-	static public void addMethods(CliBase cli, Object cmdObj) {
+	public void addMethods(Object cmdObj) {
 		Method [] methods = cmdObj.getClass().getMethods();
 		
 		for (Method method : methods) {
@@ -39,7 +39,7 @@ public class CliAnnotation {
 			else
 				commandName = cliCmd.commandName();
 			
-			cli.addCommand(commandName, cliCmd.shorthands(), cliCmd.helpString()
+			addCommand(commandName, cliCmd.shorthands(), cliCmd.helpString()
 					, (x) -> { 
 						CmdReturnType r = null;
 						try {

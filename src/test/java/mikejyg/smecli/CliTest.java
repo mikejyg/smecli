@@ -37,9 +37,8 @@ public class CliTest {
 		
 		// build a CLI with a base module.
 		
-		CliBase cli = new CliBase();
-		CliAdapter cliBaseModule = new CliAdapter(cli);
-		CliAnnotation.addMethods(cli, cliBaseModule);
+		CliAdapter cli = new CliAdapter();
+		cli.addMethods(cli);
 		
 		cli.setPrompt("> ");
 		cli.setContinueOnError(true);
@@ -74,9 +73,8 @@ public class CliTest {
 	}
 	
 	public static void main(String[] args) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
-		CliBase cli = new CliBase();
-		CliAdapter cliBaseModule = new CliAdapter(cli);
-		CliAnnotation.addMethods(cli, cliBaseModule);
+		CliAdapter cli = new CliAdapter();
+		cli.addMethods(cli);
 		
 		cli.setPrompt("> ");
 		cli.setContinueOnError(true);
