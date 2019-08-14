@@ -201,7 +201,7 @@ public class CliBase {
 			if (session.isLocalEcho())
 				session.getPrintWriter().println(cmdLine);
 			
-			if (cmdLine.charAt(0)=='#') {
+			if ( !cmdLine.isEmpty() && cmdLine.charAt(0)=='#') {
 				getCurrentSession().getPrintWriter().println(cmdLine);
 				continue;
 			}

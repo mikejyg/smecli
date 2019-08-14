@@ -3,5 +3,5 @@ help
 badCmd
 echo \"abc
 def and \n\"
-. /cliTestSubscript.txt
+. build/resources/test/cliTestSubscript.txt
 exit

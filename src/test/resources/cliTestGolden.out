@@ -1,16 +1,16 @@
 > help
-help, ?	print help.
 end	exit current session and all parent sessions.
 source, .	parameter: script_filename	execute the script file in a new session.
 echo	echo arguments.
 exit	exit current session.
+help, ?	print help.
 OK.
 > ?
-help, ?	print help.
 end	exit current session and all parent sessions.
 source, .	parameter: script_filename	execute the script file in a new session.
 echo	echo arguments.
 exit	exit current session.
+help, ?	print help.
 OK.
 > badCmd
 INVALID_COMMAND
@@ -19,13 +19,13 @@ def and \n
 abc
 def and \n
 OK.
-> . /cliTestSubscript.txt
-executing /cliTestSubscript.txt...
+> . build/resources/test/cliTestSubscript.txt
+executing build/resources/test/cliTestSubscript.txt...
 > echo from a sub-script
 from a sub-script
 OK.
 > EOF - exiting...
-/cliTestSubscript.txt execution done.
+build/resources/test/cliTestSubscript.txt execution done.
 OK.
 > exit
 exit()...
