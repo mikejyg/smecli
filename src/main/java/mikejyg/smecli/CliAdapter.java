@@ -1,11 +1,11 @@
 package mikejyg.smecli;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
@@ -25,37 +25,58 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  */
 public class CliAdapter extends CliAnnotation {
 	
-	public CliAdapter() {}
+	public CliAdapter() {
+		addMethods(this);
+	}
 	
 	@CliCommand(shorthands = {"?"}, helpString = "print help.")
 	public CmdReturnType help(CmdCallType cmdCall) {
+		String helpStr="";
 		for (CommandStruct cmd : getCommands()) {
-			getPrintWriter().println(cmd.toString());
+			if (helpStr.isEmpty())
+				helpStr = cmd.toString();
+			else
+				helpStr = helpStr + '\n' + cmd.toString();
 		}
-		return new CmdReturnType(ReturnCode.SUCCESS);
+		return new CmdReturnType(ReturnCode.SUCCESS, helpStr);
 	}
 	
 	@CliCommand(helpString = "echo arguments.")
 	public CmdReturnType echo(CmdCallType cmdCall) {
-		getPrintWriter().println(cmdCall.argumentsStr);
-		return new CmdReturnType(ReturnCode.SUCCESS);
+		return new CmdReturnType(ReturnCode.SUCCESS, cmdCall.toArgumentsString());
 	}
 	
 	@CliCommand(commandName="exit", helpString = "exit current session.")
 	public CmdReturnType exitSession(CmdCallType cmdCall) {
-		getPrintWriter().println("exit()...");
-		
 		setExitFlag(true);
-		
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
 
 	@CliCommand(helpString = "exit current session and all parent sessions.")
 	public CmdReturnType end(CmdCallType cmdCall) {
-		getPrintWriter().println("exit()...");
-		
 		setExitFlag(true);
 		setEndFlag(true);
+		return new CmdReturnType(ReturnCode.SUCCESS);
+	}
+
+	@CliCommand(helpString = "sleep for specified time (seconds in double).")
+	public CmdReturnType sleep(CmdCallType cmdCall) {
+		if (cmdCall.argumentsStr.isEmpty()) {
+			return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "missing argument.");
+		}
+		
+		try {
+			double t = Double.parseDouble(cmdCall.argumentsStr);
+			Thread.sleep((long)(t * 1000));
+			
+		} catch (NumberFormatException e) {
+			return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "NumberFormatException: " + e.getMessage());
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			return new CmdReturnType(ReturnCode.FAILURE_RECOVERABLE, "InterruptedException: " + e.getMessage());
+		} catch (IllegalArgumentException e) {
+			return new CmdReturnType(ReturnCode.FAILURE_RECOVERABLE, "IllegalArgumentException: " + e.getMessage());
+		}
 		
 		return new CmdReturnType(ReturnCode.SUCCESS);
 	}
@@ -86,7 +107,7 @@ public class CliAdapter extends CliAnnotation {
 		
 		String filename = args[0];
 		
-		getPrintWriter().println("executing " + filename + "...");
+		getPrintStream().println("executing " + filename + "...");
 		
 		InputStream inputStream;
 		try {
@@ -95,13 +116,12 @@ public class CliAdapter extends CliAnnotation {
 			return new CmdReturnType(ReturnCode.FAILURE_RECOVERABLE, "failed to open file: " + filename);
 		}
 		
-		CmdReturnType cmdReturn;
-		try ( Reader reader = new InputStreamReader( inputStream, StandardCharsets.UTF_8 ) ) {
-			cmdReturn = execAll(reader, getPrintWriter());
+		try ( BufferedReader reader = new BufferedReader( new InputStreamReader( inputStream, StandardCharsets.UTF_8 ) ) ) {
+			execAll(reader);
 		}
 		
-		getPrintWriter().println(filename + " execution done.");
-		return cmdReturn;
+		getPrintStream().println(filename + " execution done.");
+		return getLastCmdReturn();
 		
 	}
 	

@@ -3,6 +3,7 @@ end	exit current session and all parent sessions.
 source, .	parameter: script_filename	execute the script file in a new session.
 echo	echo arguments.
 exit	exit current session.
+sleep	sleep for specified time (seconds in double).
 help, ?	print help.
 OK.
 > ?
@@ -10,6 +11,7 @@ end	exit current session and all parent sessions.
 source, .	parameter: script_filename	execute the script file in a new session.
 echo	echo arguments.
 exit	exit current session.
+sleep	sleep for specified time (seconds in double).
 help, ?	print help.
 OK.
 > badCmd
@@ -26,7 +28,9 @@ from a sub-script
 OK.
 > EOF - exiting...
 build/resources/test/cliTestSubscript.txt execution done.
+from a sub-script
+OK.
+> sleep 3.3
 OK.
 > exit
-exit()...
 OK.

@@ -1,6 +1,5 @@
 package mikejyg.smecli;
 
-import java.io.PrintWriter;
 import java.io.Reader;
 
 /**
@@ -11,8 +10,6 @@ import java.io.Reader;
  */
 public class CliSession {
 	private CliLineReader cliLineReader;
-	
-	private PrintWriter printWriter;
 	
 	private String prompt;
 	
@@ -25,10 +22,8 @@ public class CliSession {
 	
 	/////////////////////////////////////////////////////
 	
-	public CliSession(Reader reader, PrintWriter printWriter
-			, String prompt, boolean localEcho) {
+	public CliSession(Reader reader, String prompt, boolean localEcho) {
 		cliLineReader = new CliLineReader(reader);
-		this.printWriter = printWriter;
 		this.prompt = prompt;
 		this.localEcho = localEcho;
 	}
@@ -47,10 +42,6 @@ public class CliSession {
 
 	public boolean isLocalEcho() {
 		return localEcho;
-	}
-
-	public PrintWriter getPrintWriter() {
-		return printWriter;
 	}
 
 	public CliLineReader getCliLineReader() {

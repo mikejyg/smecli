@@ -6,11 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -38,7 +34,6 @@ public class CliTest {
 		// build a CLI with a base module.
 		
 		CliAdapter cli = new CliAdapter();
-		cli.addMethods(cli);
 		
 		cli.setPrompt("> ");
 		cli.setContinueOnError(true);
@@ -48,9 +43,10 @@ public class CliTest {
 		
 		// execute commands from cliTestCommands.txt and write to test.out
 		
-		try ( Reader reader = new InputStreamReader( this.getClass().getResourceAsStream("/cliTestCommands.txt"), StandardCharsets.UTF_8 ) ) {
-			try ( Writer outputWriter = new OutputStreamWriter( new FileOutputStream(outputFilename), StandardCharsets.UTF_8) ) { 
-				cli.execAll(reader, outputWriter);
+		try ( BufferedReader reader = new BufferedReader(new InputStreamReader( this.getClass().getResourceAsStream("/cliTestCommands.txt"), StandardCharsets.UTF_8 ) ) ) {
+			try ( PrintStream printStream = new PrintStream( new FileOutputStream(outputFilename) ) ) {
+				cli.setPrintStream(printStream);
+				cli.execAll(reader);
 			}
 		}
 		
@@ -78,7 +74,7 @@ public class CliTest {
 		
 		cli.setPrompt("> ");
 		cli.setContinueOnError(true);
-		cli.execAll(new InputStreamReader(System.in), new PrintWriter(System.out));
+		cli.execAll(new BufferedReader(new InputStreamReader(System.in)));
 		
 	}
 	

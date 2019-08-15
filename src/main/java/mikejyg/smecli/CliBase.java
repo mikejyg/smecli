@@ -2,9 +2,7 @@ package mikejyg.smecli;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.PrintStream;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
@@ -52,8 +50,10 @@ public class CliBase {
 		@Override
 		public String toString() {
 			String str = commandName;
-			for (String s : shorthands) {
-				str += ", " + s;
+			if (shorthands!=null) {
+				for (String s : shorthands) {
+					str += ", " + s;
+				}
 			}
 			str += "\t" + helpString;
 			
@@ -80,6 +80,10 @@ public class CliBase {
 	// for nested sessions
 	private Vector<CliSession> sessionStack = new Vector<>();
 	
+	private PrintStream printStream = System.out;
+	
+	private CmdReturnType lastCmdReturn;
+	
 	///////////////////////////////////////////////////////////
 
 	/**
@@ -93,12 +97,12 @@ public class CliBase {
 			return new CmdReturnType(ReturnCode.INVALID_COMMAND);
 		}
 		
-		CmdReturnType cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
+		lastCmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
 		
-		if (cmdReturn==null)
+		if (lastCmdReturn==null)
 			throw new InvokeCommandFailed();
 		
-		return cmdReturn;
+		return lastCmdReturn;
 	}
 	
 	/** 
@@ -113,15 +117,27 @@ public class CliBase {
 		return execCmd(cmdCall);
 	}
 	
+	/** 
+	 * @param
+	 * @return null, if args is null, or no command is found in args.
+	 * @throws InvokeCommandFailed 
+	 */
+	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
+		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
+		if (cmdCall==null)
+			return null;
+		return execCmd(cmdCall);
+	}
+	
 	/**
 	 * @return true to continue or not.
 	 */
 	protected boolean processResults(CmdReturnType cmdReturn) {
 		if (cmdReturn.result!=null)
-			getCurrentSession().getPrintWriter().println(cmdReturn.result);
+			getPrintStream().println(cmdReturn.result);
 		
 		if (cmdReturn.returnCode != ReturnCode.SUCCESS) {
-			getCurrentSession().getPrintWriter().println(cmdReturn.returnCode.name());
+			getPrintStream().println(cmdReturn.returnCode.name());
 			
 			if (continueOnError)
 				return true;
@@ -129,7 +145,7 @@ public class CliBase {
 				return false;
 			
 		} else {
-			getCurrentSession().getPrintWriter().println("OK.");
+			getPrintStream().println("OK.");
 			return true;
 		}
 	}
@@ -149,14 +165,15 @@ public class CliBase {
 		commands.add(commandStruct);
 		cmdMap.put(commandStruct.commandName, commandStruct);
 		
-		for (String s : shorthands) {
-			cmdMap.put(s, commandStruct);
+		if (shorthands!=null) {
+			for (String s : shorthands) {
+				cmdMap.put(s, commandStruct);
+			}
 		}
-
 	}
 	
-	public CmdReturnType execAll(Reader reader, PrintWriter printWriter) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
-		CliSession session = new CliSession(new BufferedReader(reader), printWriter, initialPrompt, initialLocalEcho);
+	public CmdReturnType execAll(BufferedReader reader) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
+		CliSession session = new CliSession(reader, initialPrompt, initialLocalEcho);
 		sessionStack.add(session);
 		
 		CmdReturnType cmdReturnType = execAll(getCurrentSession());
@@ -164,10 +181,6 @@ public class CliBase {
 		sessionStack.remove(sessionStack.size()-1);
 
 		return cmdReturnType;
-	}
-	
-	public CmdReturnType execAll(Reader reader, Writer writer) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
-		return execAll(reader, new PrintWriter(writer));
 	}
 	
 	/**
@@ -185,8 +198,8 @@ public class CliBase {
 		while (!session.isExitFlag()) {
 			
 			if (session.getPrompt()!=null) {
-				session.getPrintWriter().print(session.getPrompt());
-				session.getPrintWriter().flush();
+				getPrintStream().print(session.getPrompt());
+				getPrintStream().flush();
 			}
 			
 			String cmdLine;
@@ -194,15 +207,17 @@ public class CliBase {
 				cmdLine=getCurrentSession().getCliLineReader().readCliLine();
 				
 			} catch (EofException e) {
-				session.getPrintWriter().println("EOF - exiting...");
+				getPrintStream().println("EOF - exiting...");
 				break;
 			}
 			
-			if (session.isLocalEcho())
-				session.getPrintWriter().println(cmdLine);
+			if (session.isLocalEcho()) {
+				getPrintStream().println(cmdLine);
+				getPrintStream().flush();
+			}
 			
 			if ( !cmdLine.isEmpty() && cmdLine.charAt(0)=='#') {
-				getCurrentSession().getPrintWriter().println(cmdLine);
+//				getCurrentSession().getPrintWriter().println(cmdLine);
 				continue;
 			}
 			
@@ -250,6 +265,8 @@ public class CliBase {
 	}
 
 	protected CliSession getCurrentSession() {
+		if (sessionStack.isEmpty())
+			return null;
 		return sessionStack.lastElement();
 	}
 	
@@ -261,10 +278,14 @@ public class CliBase {
 		return commands;
 	}
 
-	public PrintWriter getPrintWriter() {
-		return getCurrentSession().getPrintWriter();
+	public PrintStream getPrintStream() {
+		return printStream;
 	}
 	
+	public void setPrintStream(PrintStream printStream) {
+		this.printStream = printStream;
+	}
+
 	public void setExitFlag(boolean exitFlag) {
 		getCurrentSession().setExitFlag(exitFlag);
 	}
@@ -273,4 +294,12 @@ public class CliBase {
 		getCurrentSession().setEndFlag(endFlag);
 	}
 	
+	public CmdReturnType getLastCmdReturn() {
+		return lastCmdReturn;
+	}
+
+	public void setLastCmdReturn(CmdReturnType lastCmdReturn) {
+		this.lastCmdReturn = lastCmdReturn;
+	}
+
 }	
