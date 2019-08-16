@@ -3,7 +3,7 @@ package mikejyg.smecli;
 import java.io.Reader;
 
 /**
- * a session is tied to a pair of reader and writer.
+ * a session is tied to a reader.
  * 
  * @author jgu
  *
@@ -18,8 +18,6 @@ public class CliSession {
 	// working variables
 	private boolean exitFlag;
 
-	private boolean endFlag;	// exit all (nested) sessions.
-	
 	/////////////////////////////////////////////////////
 	
 	public CliSession(Reader reader, String prompt, boolean localEcho) {
@@ -44,16 +42,12 @@ public class CliSession {
 		return localEcho;
 	}
 
+	public void setLocalEcho(boolean localEcho) {
+		this.localEcho = localEcho;
+	}
+
 	public CliLineReader getCliLineReader() {
 		return cliLineReader;
-	}
-
-	public boolean isEndFlag() {
-		return endFlag;
-	}
-
-	public void setEndFlag(boolean endFlag) {
-		this.endFlag = endFlag;
 	}
 
 	

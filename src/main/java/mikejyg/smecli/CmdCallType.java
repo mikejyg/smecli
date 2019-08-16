@@ -14,18 +14,19 @@ import java.util.Arrays;
  *
  */
 public class CmdCallType {
-	public String commandName;
+	private String commandName;
 	
 	/**
 	 * contains the already parsed command-line args[].
 	 * If it is null, then use argumentsStr.
 	 */
-	public String args[];
+	private String args[];
 	
 	/**
-	 * string containing all arguments, not null.
+	 * if args[] is null, then this string containing all arguments.
+	 * otherwise, it references args[0].
 	 */
-	public String argumentsStr;
+	private String argumentsStr;
 
 	/**
 	 * constructor with a single parsed argument string.
@@ -46,11 +47,7 @@ public class CmdCallType {
 		this.commandName = commandName;
 		if (args.length!=0) {
 			this.args = args;
-			
-			if (args[0]!=null)
-				argumentsStr = args[0];
-			else
-				argumentsStr = "";
+			argumentsStr = args[0];
 			
 		} else {
 			argumentsStr="";
@@ -110,6 +107,18 @@ public class CmdCallType {
 			return null;
 		
 		return new CmdCallType(args[0], Arrays.copyOfRange(args, 1, args.length));
+	}
+
+	public String getCommandName() {
+		return commandName;
+	}
+
+	public String[] getArgs() {
+		return args;
+	}
+
+	public String getArgumentsStr() {
+		return argumentsStr;
 	}
 	
 	

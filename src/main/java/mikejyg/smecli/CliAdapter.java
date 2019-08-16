@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
  * It is named CliAdapter for lack of a better name.
@@ -29,6 +30,38 @@ public class CliAdapter extends CliAnnotation {
 		addMethods(this);
 	}
 	
+	/**
+	 * transform to args[] from cmdCall, if needed.
+	 * Here, args are separated by white spaces, and before the comment symbol #.
+	 * 
+	 * @param cmdCall
+	 * @return
+	 */
+	public static String[] toArgs(CmdCallType cmdCall) {
+		String args[] = cmdCall.getArgs();
+		
+		if (args==null) {
+			args = CliUtils.toArgs(cmdCall.getArgumentsStr());
+		}
+		args=CliUtils.removeEndComments(args);
+
+		return args;
+	}
+	
+	/**
+	 * Get the first argument. It uses the same mechanism as toArgs().
+	 * 
+	 * @param cmdCall
+	 * @return null if no arg.
+	 */
+	public static String getArg0(CmdCallType cmdCall) {
+		String args[]=toArgs(cmdCall);
+		if (args==null || args.length==0)
+			return null;
+		else
+			return args[0];
+	}
+	
 	@CliCommand(shorthands = {"?"}, helpString = "print help.")
 	public CmdReturnType help(CmdCallType cmdCall) {
 		String helpStr="";
@@ -46,27 +79,28 @@ public class CliAdapter extends CliAnnotation {
 		return new CmdReturnType(ReturnCode.SUCCESS, cmdCall.toArgumentsString());
 	}
 	
-	@CliCommand(commandName="exit", helpString = "exit current session.")
+	@CliCommand(commandName="exit", helpString = "exit current session with an optional argument.")
 	public CmdReturnType exitSession(CmdCallType cmdCall) {
 		setExitFlag(true);
-		return new CmdReturnType(ReturnCode.SUCCESS);
+		return new CmdReturnType(ReturnCode.SUCCESS, getArg0(cmdCall));
 	}
 
-	@CliCommand(helpString = "exit current session and all parent sessions.")
+	@CliCommand(helpString = "exit current session and all parent sessions with an optional argument.")
 	public CmdReturnType end(CmdCallType cmdCall) {
 		setExitFlag(true);
 		setEndFlag(true);
-		return new CmdReturnType(ReturnCode.SUCCESS);
+		return new CmdReturnType(ReturnCode.SUCCESS, getArg0(cmdCall));
 	}
 
 	@CliCommand(helpString = "sleep for specified time (seconds in double).")
 	public CmdReturnType sleep(CmdCallType cmdCall) {
-		if (cmdCall.argumentsStr.isEmpty()) {
+		String arg = getArg0(cmdCall);
+		if (arg==null || arg.isEmpty()) {
 			return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "missing argument.");
 		}
 		
 		try {
-			double t = Double.parseDouble(cmdCall.argumentsStr);
+			double t = Double.parseDouble(arg);
 			Thread.sleep((long)(t * 1000));
 			
 		} catch (NumberFormatException e) {
@@ -92,22 +126,20 @@ public class CliAdapter extends CliAnnotation {
 	 * @throws ExitAllSessions
 	 */
 	@CliCommand(shorthands= {"."}, helpString = "parameter: script_filename\texecute the script file in a new session.")
-	public CmdReturnType source(CmdCallType cmdCall) throws FileNotFoundException, IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
-		String args[] = CliUtils.toArgs(cmdCall.argumentsStr);
+	public CmdReturnType source(CmdCallType cmdCall) throws FileNotFoundException, IOException, IllegalInputCharException, UnexpectedEofException {
+		String args[] = toArgs(cmdCall);
 		
-		if (args.length < 1) {
-			CmdReturnType cmdReturn = new CmdReturnType(ReturnCode.INVALID_ARGUMENT);
-			cmdReturn.result = "missing argument";
+		if (args==null || args.length < 1) {
+			CmdReturnType cmdReturn = new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "missing argument");
 			return cmdReturn;
 		} else if (args.length>1) {
-			CmdReturnType cmdReturn = new CmdReturnType(ReturnCode.INVALID_ARGUMENT);
-			cmdReturn.result = "excessive arguments after " + args[0];
+			CmdReturnType cmdReturn = new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "excessive arguments after " + args[0]);
 			return cmdReturn;
 		}
 		
 		String filename = args[0];
 		
-		getPrintStream().println("executing " + filename + "...");
+//		getPrintStream().println("executing " + filename + "...");
 		
 		InputStream inputStream;
 		try {
@@ -120,9 +152,29 @@ public class CliAdapter extends CliAnnotation {
 			execAll(reader);
 		}
 		
-		getPrintStream().println(filename + " execution done.");
-		return getLastCmdReturn();
+//		getPrintStream().println(filename + " execution done.");
+		return null;
 		
+	}
+	
+	@CliCommand(helpString = "With an argument, set local echo to on or off, or without argument, show current local echo state.")
+	public CmdReturnType localEcho(CmdCallType cmdCall) {
+		String arg = getArg0(cmdCall);
+		if ( arg==null || arg.isEmpty())
+			return new CmdReturnType(ReturnCode.SUCCESS, isLocalEcho() ? "on" : "off");
+		
+		if ( arg.contentEquals("on") ) {
+			setLocalEcho(true);
+			
+		} else if ( arg.contentEquals("off") ) {
+			setLocalEcho(false);
+			
+		} else {
+			return new CmdReturnType(ReturnCode.INVALID_ARGUMENT);
+		}
+		
+		return new CmdReturnType(ReturnCode.SUCCESS, isLocalEcho() ? "on" : "off");
+			
 	}
 	
 	

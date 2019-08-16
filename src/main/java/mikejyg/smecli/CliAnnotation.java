@@ -14,6 +14,9 @@ import java.lang.reflect.Method;
 public class CliAnnotation extends CliBase {
 	/**
 	 * a commandName function is of the form: CmdReturnType commandName(String argumentsStr)
+	 * The return can be null, in which case it means the command itself has no result,
+	 *   e.g. when the source command complete successfully
+	 *   (as the result of the last command within the source, is assumed to have been captured already).
 	 *  
 	 * @param argumentsStr	a string contains device specific arguments... 
 	 * @return

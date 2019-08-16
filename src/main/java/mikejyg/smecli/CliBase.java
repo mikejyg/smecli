@@ -10,6 +10,7 @@ import java.util.function.Function;
 
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
  * A text console does the following,
@@ -31,10 +32,6 @@ public class CliBase {
 	static public class EofException extends Exception {
 		private static final long serialVersionUID = 1L;
 	};
-	
-	static public class ExitAllSessions extends Exception {
-		private static final long serialVersionUID = 1L;
-	}
 	
 	static public class InvokeCommandFailed extends Exception {
 		private static final long serialVersionUID = 1L;
@@ -67,7 +64,7 @@ public class CliBase {
 	
 	private String initialPrompt = "";
 	
-	private boolean initialLocalEcho;
+	private boolean localEcho;
 
 	private boolean continueOnError;
 
@@ -77,11 +74,19 @@ public class CliBase {
 	
 	private Map<String, CommandStruct> cmdMap = new TreeMap<>();
 	
+	private boolean endFlag;	// exit all (nested) sessions.
+	
 	// for nested sessions
 	private Vector<CliSession> sessionStack = new Vector<>();
 	
+	/**
+	 * where to print out things, including prompt, results, errors, status...
+	 */
 	private PrintStream printStream = System.out;
 	
+	/**
+	 * last result of a command, excluding those that produce no results (null).
+	 */
 	private CmdReturnType lastCmdReturn;
 	
 	///////////////////////////////////////////////////////////
@@ -91,18 +96,18 @@ public class CliBase {
 	 * @Return not null.
 	 */
 	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed  {
-		CommandStruct cmdStruct = cmdMap.get(cmdCall.commandName);
+		CommandStruct cmdStruct = cmdMap.get(cmdCall.getCommandName());
 		
 		if (cmdStruct==null) {
-			return new CmdReturnType(ReturnCode.INVALID_COMMAND);
+			lastCmdReturn = new CmdReturnType(ReturnCode.INVALID_COMMAND);
+			return lastCmdReturn;
 		}
 		
-		lastCmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
+		CmdReturnType cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
+		if ( cmdReturn != null )
+			lastCmdReturn = cmdReturn;
 		
-		if (lastCmdReturn==null)
-			throw new InvokeCommandFailed();
-		
-		return lastCmdReturn;
+		return cmdReturn;
 	}
 	
 	/** 
@@ -113,7 +118,8 @@ public class CliBase {
 	public CmdReturnType execCmd(String cmdLine) throws InvokeCommandFailed {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(cmdLine);
 		if (cmdCall==null)
-			return null;
+			return null;			// no command was executed
+			
 		return execCmd(cmdCall);
 	}
 	
@@ -125,28 +131,23 @@ public class CliBase {
 	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
 		if (cmdCall==null)
-			return null;
+			return null;	// no command was executed
+		
 		return execCmd(cmdCall);
 	}
 	
 	/**
-	 * @return true to continue or not.
+	 * @param cmdReturn not null.
 	 */
-	protected boolean processResults(CmdReturnType cmdReturn) {
-		if (cmdReturn.result!=null)
-			getPrintStream().println(cmdReturn.result);
+	protected void processResults(CmdReturnType cmdReturn) {
+		if ( cmdReturn.getResult()!=null && ! cmdReturn.getResult().isEmpty() )
+			getPrintStream().println(cmdReturn.getResult());
 		
-		if (cmdReturn.returnCode != ReturnCode.SUCCESS) {
-			getPrintStream().println(cmdReturn.returnCode.name());
-			
-			if (continueOnError)
-				return true;
-			else
-				return false;
-			
+		if (cmdReturn.getReturnCode() != ReturnCode.SUCCESS) {
+			getPrintStream().println(cmdReturn.getReturnCode().name());
+		
 		} else {
 			getPrintStream().println("OK.");
-			return true;
 		}
 	}
 	
@@ -172,15 +173,13 @@ public class CliBase {
 		}
 	}
 	
-	public CmdReturnType execAll(BufferedReader reader) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
-		CliSession session = new CliSession(reader, initialPrompt, initialLocalEcho);
+	public void execAll(BufferedReader reader) throws IOException, IllegalInputCharException, UnexpectedEofException {
+		CliSession session = new CliSession(reader, initialPrompt, isLocalEcho());
 		sessionStack.add(session);
 		
-		CmdReturnType cmdReturnType = execAll(getCurrentSession());
+		execAll(getCurrentSession());
 		
 		sessionStack.remove(sessionStack.size()-1);
-
-		return cmdReturnType;
 	}
 	
 	/**
@@ -192,10 +191,8 @@ public class CliBase {
 	 * 
 	 * @return the return of the last command
 	 */
-	protected CmdReturnType execAll(CliSession session) throws IOException, UnexpectedEofException, IllegalInputCharException, ExitAllSessions {
-		CmdReturnType cmdReturn=null;
-		
-		while (!session.isExitFlag()) {
+	protected void execAll(CliSession session) throws IOException, UnexpectedEofException, IllegalInputCharException {
+		while ( !isEndFlag() && !session.isExitFlag() ) {
 			
 			if (session.getPrompt()!=null) {
 				getPrintStream().print(session.getPrompt());
@@ -221,6 +218,7 @@ public class CliBase {
 				continue;
 			}
 			
+			CmdReturnType cmdReturn;
 			try {
 				cmdReturn = execCmd(cmdLine);
 			} catch (InvokeCommandFailed e) {
@@ -230,14 +228,13 @@ public class CliBase {
 			if (cmdReturn==null)	// no command is executed.
 				continue;
 			
-			if (session.isEndFlag())
-				throw new ExitAllSessions();
+			processResults(cmdReturn);
 			
-			if ( ! processResults(cmdReturn) )
+			if (cmdReturn.getReturnCode() != ReturnCode.SUCCESS && !continueOnError) {
 				break;
+			}
+			
 		}
-		
-		return cmdReturn;
 	}
 	
 	/**
@@ -253,9 +250,19 @@ public class CliBase {
 	 * @param localEcho
 	 */
 	public void setLocalEcho(boolean localEcho) {
-		this.initialLocalEcho = localEcho;
+		if (sessionStack.isEmpty())
+			this.localEcho = localEcho;
+		else
+			getCurrentSession().setLocalEcho(localEcho);
 	}
 
+	public boolean isLocalEcho() {
+		if (sessionStack.isEmpty())
+			return localEcho;
+		else
+			return getCurrentSession().isLocalEcho();
+	}
+	
 	/**
 	 * Set the prompt. If it is set to null, then prompt is disabled. 
 	 * @param prompt
@@ -290,16 +297,17 @@ public class CliBase {
 		getCurrentSession().setExitFlag(exitFlag);
 	}
 	
+	public boolean isEndFlag() {
+		return endFlag;
+	}
+	
 	public void setEndFlag(boolean endFlag) {
-		getCurrentSession().setEndFlag(endFlag);
+		this.endFlag = endFlag;
 	}
 	
 	public CmdReturnType getLastCmdReturn() {
 		return lastCmdReturn;
 	}
 
-	public void setLastCmdReturn(CmdReturnType lastCmdReturn) {
-		this.lastCmdReturn = lastCmdReturn;
-	}
 
 }	

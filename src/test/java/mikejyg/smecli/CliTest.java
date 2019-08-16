@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import mikejyg.smecli.CliBase.ExitAllSessions;
+import mikejyg.smecli.CliBase.InvokeCommandFailed;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 
@@ -29,7 +29,7 @@ public class CliTest {
 	}
 
 	@Test
-	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
+	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException {
 		
 		// build a CLI with a base module.
 		
@@ -68,13 +68,21 @@ public class CliTest {
 		
 	}
 	
-	public static void main(String[] args) throws IOException, IllegalInputCharException, UnexpectedEofException, ExitAllSessions {
+	public static void main(String[] args) throws IOException, IllegalInputCharException, UnexpectedEofException, InvokeCommandFailed {
 		CliAdapter cli = new CliAdapter();
 		cli.addMethods(cli);
 		
 		cli.setPrompt("> ");
 		cli.setContinueOnError(true);
-		cli.execAll(new BufferedReader(new InputStreamReader(System.in)));
+		
+		if (args.length<1) {	// no argument, run in interactive mode
+			cli.execAll(new BufferedReader(new InputStreamReader(System.in)));
+			
+		} else {	// execute args as a command
+			CmdReturnType cmdReturn = cli.execCmd(args);
+			if (cmdReturn!=null)
+				System.out.println( cmdReturn );
+		}
 		
 	}
 	

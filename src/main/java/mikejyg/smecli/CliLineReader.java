@@ -192,7 +192,7 @@ public class CliLineReader {
 	 * @throws IllegalInputCharException 
 	 * @throws UnexpectedEofException 
 	 * 
-	 * @return not null, a read command line, or an empty string.
+	 * @return not null, a read command line, or an empty string. The return the string is trimmed.
 	 */
 	public String readCliLine() throws IOException, EofException, IllegalInputCharException, UnexpectedEofException {
 		if (eofFlag)
