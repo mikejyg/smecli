@@ -1,34 +1,45 @@
 > help
-end	exit current session and all parent sessions with an optional argument.
+OK
 source, .	parameter: script_filename	execute the script file in a new session.
+localEcho	With an argument, set local echo to on or off, or without argument, show current local echo state.
+help, ?	print help.
+continueOnError, coe	set whether to continue on command execution error. if no argument is given, prints out current state, otherwise use argument on or off.
+end	exit current session and all parent sessions with an optional argument.
 echo	echo arguments.
 exit	exit current session with an optional argument.
-localEcho	With an argument, set local echo to on or off, or without argument, show current local echo state.
 sleep	sleep for specified time (seconds in double).
-help, ?	print help.
-OK.
+assert	assert the value of the last result. 1st argument the return code string, 2nd argument(optional) is is the result string.
 > ?
-end	exit current session and all parent sessions with an optional argument.
+OK
 source, .	parameter: script_filename	execute the script file in a new session.
+localEcho	With an argument, set local echo to on or off, or without argument, show current local echo state.
+help, ?	print help.
+continueOnError, coe	set whether to continue on command execution error. if no argument is given, prints out current state, otherwise use argument on or off.
+end	exit current session and all parent sessions with an optional argument.
 echo	echo arguments.
 exit	exit current session with an optional argument.
-localEcho	With an argument, set local echo to on or off, or without argument, show current local echo state.
 sleep	sleep for specified time (seconds in double).
-help, ?	print help.
-OK.
+assert	assert the value of the last result. 1st argument the return code string, 2nd argument(optional) is is the result string.
 > badCmd
 INVALID_COMMAND
 > echo abc
 def and \n
+OK
 abc
 def and \n
-OK.
 > . build/resources/test/cliTestSubscript.txt
 > echo from a sub-script
+OK
 from a sub-script
-OK.
+> echo 123
+OK
+123
+> assert OK 123
+OK
+> assert OK
+OK
 > EOF - exiting...
 > sleep 3.3
-OK.
+OK
 > exit
-OK.
+EXIT

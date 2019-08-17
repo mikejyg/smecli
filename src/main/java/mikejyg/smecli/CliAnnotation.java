@@ -11,24 +11,21 @@ import java.lang.reflect.Method;
  * @author jgu
  *
  */
-public class CliAnnotation extends CliBase {
+public class CliAnnotation {
+	
 	/**
 	 * a commandName function is of the form: CmdReturnType commandName(String argumentsStr)
-	 * The return can be null, in which case it means the command itself has no result,
-	 *   e.g. when the source command complete successfully
-	 *   (as the result of the last command within the source, is assumed to have been captured already).
-	 *  
-	 * @param argumentsStr	a string contains device specific arguments... 
-	 * @return
+	 * 
+	 * see CliBase.execAll(CliSession session) for details on returns.
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
-	static public @interface CliCommand {
+	public static @interface CliCommand {
 		String commandName() default "";	// when default, use the function name.
 		String [] shorthands() default {};
 		String helpString() default "";
 	}
 	
-	public void addMethods(Object cmdObj) {
+	public static void addMethods(CliCommands cliCommands, Object cmdObj) {
 		Method [] methods = cmdObj.getClass().getMethods();
 		
 		for (Method method : methods) {
@@ -42,7 +39,7 @@ public class CliAnnotation extends CliBase {
 			else
 				commandName = cliCmd.commandName();
 			
-			addCommand(commandName, cliCmd.shorthands(), cliCmd.helpString()
+			cliCommands.addCommand(commandName, cliCmd.shorthands(), cliCmd.helpString()
 					, (x) -> { 
 						CmdReturnType r = null;
 						try {

@@ -1,0 +1,3 @@
+echo errExit1
+source errExit2
+echo this should not happen in errExit1!

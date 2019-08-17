@@ -3,11 +3,10 @@ package mikejyg.smecli;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Vector;
-import java.util.function.Function;
+import java.util.Stack;
 
+import mikejyg.smecli.CliCommands.CommandStruct;
+import mikejyg.smecli.CliCommands.InvokeCommandFailed;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
@@ -32,154 +31,129 @@ public class CliBase {
 	static public class EofException extends Exception {
 		private static final long serialVersionUID = 1L;
 	};
-	
-	static public class InvokeCommandFailed extends Exception {
-		private static final long serialVersionUID = 1L;
-	}
-	
-	static class CommandStruct {
-		String commandName;
-		String [] shorthands;
-		String helpString;
-
-		Function<CmdCallType, CmdReturnType> cmdFunc;
 		
-		@Override
-		public String toString() {
-			String str = commandName;
-			if (shorthands!=null) {
-				for (String s : shorthands) {
-					str += ", " + s;
-				}
-			}
-			str += "\t" + helpString;
-			
-			return str;
-		}
-	};
-	
 	///////////////////////////////////////////////////////////////////
 
+	/**
+	 * for built-in and flow control commands
+	 */
+	private CliCommands cliCommands;
+	
+	private CommandExecutorBase commandExecutor;
+	
 	// behavior options:
 	
-	private String initialPrompt = "";
+	private String prompt = "";
 	
 	private boolean localEcho;
 
-	private boolean continueOnError;
+	/**
+	 * For the root (1st) session, whether to continue (not exit) on error.
+	 * For all sub sessions, always exit on error.
+	 */
+	private boolean continueOnError=true;
 
-	// command storage & indexes
-	
-	private Vector<CommandStruct> commands = new Vector<>();
-	
-	private Map<String, CommandStruct> cmdMap = new TreeMap<>();
-	
 	private boolean endFlag;	// exit all (nested) sessions.
 	
 	// for nested sessions
-	private Vector<CliSession> sessionStack = new Vector<>();
+	private Stack<CliSession> sessionStack = new Stack<>();
 	
 	/**
 	 * where to print out things, including prompt, results, errors, status...
 	 */
 	private PrintStream printStream = System.out;
 	
+	// working variables
+	
 	/**
-	 * last result of a command, excluding those that produce no results (null).
+	 * last result of a non-flow control command.
 	 */
 	private CmdReturnType lastCmdReturn;
-	
-	///////////////////////////////////////////////////////////
 
+	///////////////////////////////////////////////////////////
+	
+	public CliBase(CommandExecutorBase commandExecutor) {
+		cliCommands = new CliCommands();
+		this.commandExecutor = commandExecutor;
+	}
+	
 	/**
 	 * @throws InvokeCommandFailed
-	 * @Return not null.
 	 */
-	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed  {
-		CommandStruct cmdStruct = cmdMap.get(cmdCall.getCommandName());
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed {
+		// do built-in command first...
+		CommandStruct cmdStruct = cliCommands.getCommand(cmdCall.getCommandName());
 		
-		if (cmdStruct==null) {
-			lastCmdReturn = new CmdReturnType(ReturnCode.INVALID_COMMAND);
+		if (cmdStruct!=null) {
+			CmdReturnType cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
+
+			if ( cmdReturn!=null && cmdReturn.getReturnCode()!=ReturnCode.SCRIPT_ERROR_EXIT ) {
+				lastCmdReturn = cmdReturn;
+			}
+			
+			return cmdReturn;
+			
+		} else {
+			lastCmdReturn = commandExecutor.execCmd(cmdCall);
+			
+			if (lastCmdReturn.getReturnCode()==ReturnCode.EXIT) {
+				setExitFlag(true);
+			} else if (lastCmdReturn.getReturnCode()==ReturnCode.END) {
+				setExitFlag(true);
+				setEndFlag(true);
+			}
+			
 			return lastCmdReturn;
 		}
-		
-		CmdReturnType cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
-		if ( cmdReturn != null )
-			lastCmdReturn = cmdReturn;
-		
-		return cmdReturn;
 	}
 	
 	/** 
 	 * @param cmdLine
-	 * @return null, if cmdLins is null, or no command is found in the cmdLine.
+	 * @return null, if no command is found in the cmdLine.
 	 * @throws InvokeCommandFailed 
 	 */
 	public CmdReturnType execCmd(String cmdLine) throws InvokeCommandFailed {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(cmdLine);
-		if (cmdCall==null)
+		if (cmdCall.isEmpty())
 			return null;			// no command was executed
 			
 		return execCmd(cmdCall);
 	}
-	
+
 	/** 
 	 * @param
-	 * @return null, if args is null, or no command is found in args.
+	 * @return null, if no command is found in args.
 	 * @throws InvokeCommandFailed 
 	 */
 	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
-		if (cmdCall==null)
+		if (cmdCall.isEmpty())
 			return null;	// no command was executed
 		
 		return execCmd(cmdCall);
 	}
-	
+
 	/**
-	 * @param cmdReturn not null.
+	 * override this method to get the command returns.
+	 * 
+	 * @param cmdReturn
 	 */
 	protected void processResults(CmdReturnType cmdReturn) {
-		if ( cmdReturn.getResult()!=null && ! cmdReturn.getResult().isEmpty() )
-			getPrintStream().println(cmdReturn.getResult());
+		printStream.println(cmdReturn.getReturnCode().name());
 		
-		if (cmdReturn.getReturnCode() != ReturnCode.SUCCESS) {
-			getPrintStream().println(cmdReturn.getReturnCode().name());
-		
-		} else {
-			getPrintStream().println("OK.");
-		}
+		if ( ! cmdReturn.getResult().isEmpty() )
+			printStream.println(cmdReturn.getResult());
 	}
 	
-	///////////////////////////////////////////////////////////
-	
-	public CliBase() {}
-	
-	public void addCommand(String commandName, String shorthands[], String helpString, Function<CmdCallType, CmdReturnType> cmdFunc) {
-		CommandStruct commandStruct=new CommandStruct();
-		
-		commandStruct.commandName = commandName;
-		commandStruct.shorthands = shorthands;
-		commandStruct.helpString = helpString;
-		commandStruct.cmdFunc = cmdFunc;
-		
-		commands.add(commandStruct);
-		cmdMap.put(commandStruct.commandName, commandStruct);
-		
-		if (shorthands!=null) {
-			for (String s : shorthands) {
-				cmdMap.put(s, commandStruct);
-			}
-		}
-	}
-	
-	public void execAll(BufferedReader reader) throws IOException, IllegalInputCharException, UnexpectedEofException {
-		CliSession session = new CliSession(reader, initialPrompt, isLocalEcho());
+	public CmdReturnType execAll(BufferedReader reader) throws IOException, IllegalInputCharException, UnexpectedEofException {
+		CliSession session = new CliSession(reader, prompt, isLocalEcho());
 		sessionStack.add(session);
 		
-		execAll(getCurrentSession());
+		CmdReturnType cmdReturn = execAll(getCurrentSession());
 		
 		sessionStack.remove(sessionStack.size()-1);
+		
+		return cmdReturn;
 	}
 	
 	/**
@@ -189,14 +163,29 @@ public class CliBase {
 	 * @throws IllegalInputCharException 
 	 * @throws ExitAllSessions 
 	 * 
-	 * @return the return of the last command
+	 * @return null, if no error. an error return, otherwise.
+	 * 
+	 * Conversions on using command returns and lastCmdReturn:
+	 *   Each command returns a CmdReturnType.
+	 *   Additionally, if the result is a solid result, it is persisted in the variable lastCmdReturn.
+	 *   A solid result is,
+	 *     error executing the command,
+	 *     or, success executing a non-flow control command (e.g. source).
+	 *   
+	 *   The rationale is that when flow control commands succeed, they are transparent, or invisible.
+	 *   
+	 * possible return values:
+	 *   null: NOP, or a flow control command succeeds.
+	 *   SCRIPT_ERROR_EXIT: to exit cascadingly, due to an error while executing a script.
+	 *   others: solid results
+	 * 
 	 */
-	protected void execAll(CliSession session) throws IOException, UnexpectedEofException, IllegalInputCharException {
+	protected CmdReturnType execAll(CliSession session) throws IOException, UnexpectedEofException, IllegalInputCharException {
 		while ( !isEndFlag() && !session.isExitFlag() ) {
 			
-			if (session.getPrompt()!=null) {
-				getPrintStream().print(session.getPrompt());
-				getPrintStream().flush();
+			if (!session.getPrompt().isEmpty()) {
+				printStream.print(session.getPrompt());
+				printStream.flush();
 			}
 			
 			String cmdLine;
@@ -204,13 +193,13 @@ public class CliBase {
 				cmdLine=getCurrentSession().getCliLineReader().readCliLine();
 				
 			} catch (EofException e) {
-				getPrintStream().println("EOF - exiting...");
+				printStream.println("EOF - exiting...");
 				break;
 			}
 			
 			if (session.isLocalEcho()) {
-				getPrintStream().println(cmdLine);
-				getPrintStream().flush();
+				printStream.println(cmdLine);
+				printStream.flush();
 			}
 			
 			if ( !cmdLine.isEmpty() && cmdLine.charAt(0)=='#') {
@@ -228,13 +217,24 @@ public class CliBase {
 			if (cmdReturn==null)	// no command is executed.
 				continue;
 			
+			if (cmdReturn.getReturnCode()==ReturnCode.SCRIPT_ERROR_EXIT) {	// cascade exit
+				if ( ! isRootSession(session) || ! continueOnError ) {
+					return cmdReturn;	
+				}
+			}
+			
+			// has a solid return
 			processResults(cmdReturn);
 			
-			if (cmdReturn.getReturnCode() != ReturnCode.SUCCESS && !continueOnError) {
-				break;
+			if ( ! cmdReturn.getReturnCode().isOk() ) {	// error
+				if ( ! isRootSession(session) || ! continueOnError ) {
+					return new CmdReturnType(ReturnCode.SCRIPT_ERROR_EXIT);	// initiate cascade exit
+				}
 			}
 			
 		}
+		
+		return null;
 	}
 	
 	/**
@@ -245,6 +245,10 @@ public class CliBase {
 		this.continueOnError = continueOnError;
 	}
 
+	public boolean isContinueOnError() {
+		return continueOnError;
+	}
+	
 	/**
 	 * whether to echo the command that is read. This is useful in script execution mode.
 	 * @param localEcho
@@ -264,11 +268,11 @@ public class CliBase {
 	}
 	
 	/**
-	 * Set the prompt. If it is set to null, then prompt is disabled. 
+	 * Set the prompt. If it is set to en empty string, then prompt is disabled. 
 	 * @param prompt
 	 */
 	public void setPrompt(String prompt) {
-		this.initialPrompt = prompt;
+		this.prompt = prompt;
 	}
 
 	protected CliSession getCurrentSession() {
@@ -277,24 +281,16 @@ public class CliBase {
 		return sessionStack.lastElement();
 	}
 	
-	/**
-	 * return the list of available commands.
-	 * @return
-	 */
-	public Vector<CommandStruct> getCommands() {
-		return commands;
-	}
-
-	public PrintStream getPrintStream() {
-		return printStream;
-	}
-	
 	public void setPrintStream(PrintStream printStream) {
 		this.printStream = printStream;
 	}
 
 	public void setExitFlag(boolean exitFlag) {
-		getCurrentSession().setExitFlag(exitFlag);
+		if ( sessionStack.isEmpty() ) {
+			;	// not applicable, ignored
+		} else {
+			getCurrentSession().setExitFlag(exitFlag);
+		}
 	}
 	
 	public boolean isEndFlag() {
@@ -305,9 +301,21 @@ public class CliBase {
 		this.endFlag = endFlag;
 	}
 	
+	public boolean isRootSession(CliSession cliSession) {
+		return cliSession == sessionStack.elementAt(0);
+	}
+
+	public CliCommands getCliCommands() {
+		return cliCommands;
+	}
+
 	public CmdReturnType getLastCmdReturn() {
 		return lastCmdReturn;
 	}
 
+	public CommandExecutorBase getCommandExecutor() {
+		return commandExecutor;
+	}
 
+	
 }	

@@ -28,6 +28,16 @@ public class CmdCallType {
 	 */
 	private String argumentsStr;
 
+	////////////////////////////////////////////////////////////
+	
+	/**
+	 * construct an empty cmdCall.
+	 */
+	public CmdCallType() {
+		commandName=new String();
+		argumentsStr = new String();
+	}
+	
 	/**
 	 * constructor with a single parsed argument string.
 	 * @param commandName
@@ -54,8 +64,12 @@ public class CmdCallType {
 		}
 	}
 	
+	public boolean isEmpty() {
+		return commandName.isEmpty();
+	}
+	
 	/**
-	 * @return a string contains the entire arguments, not null.
+	 * @return a string contains the entire arguments.
 	 */
 	public String toArgumentsString() {
 		if (args==null)
@@ -83,11 +97,11 @@ public class CmdCallType {
 	 * parse a string command line to the CmdCallType structure.
 	 * 
 	 * @param cmdString
-	 * @return null, if cmdLins is empty.
+	 * @return
 	 */
 	public static CmdCallType toCmdCall(String cmdLine) {
-		if (cmdLine==null || cmdLine.isEmpty())
-			return null;
+		if (cmdLine.isEmpty())
+			return new CmdCallType();
 		
 		CmdCallType cmdCall;
 		
@@ -103,8 +117,8 @@ public class CmdCallType {
 	}
 	
 	public static CmdCallType toCmdCall(String args[]) {
-		if (args==null || args.length==0)
-			return null;
+		if (args.length==0)
+			return new CmdCallType();
 		
 		return new CmdCallType(args[0], Arrays.copyOfRange(args, 1, args.length));
 	}
@@ -113,6 +127,10 @@ public class CmdCallType {
 		return commandName;
 	}
 
+	/**
+	 * 
+	 * @return can be null.
+	 */
 	public String[] getArgs() {
 		return args;
 	}
@@ -121,5 +139,5 @@ public class CmdCallType {
 		return argumentsStr;
 	}
 	
-	
+
 }

@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import mikejyg.smecli.CliBase.InvokeCommandFailed;
+import mikejyg.smecli.CliCommands.InvokeCommandFailed;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 
@@ -30,13 +30,10 @@ public class CliTest {
 
 	@Test
 	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException {
-		
-		// build a CLI with a base module.
-		
-		CliAdapter cli = new CliAdapter();
+		CommandExecutorBase commandExecutor = new CommandExecutor();
+		CliAdapter cli = new CliAdapter(commandExecutor);
 		
 		cli.setPrompt("> ");
-		cli.setContinueOnError(true);
 		cli.setLocalEcho(true);
 
 		final String outputFilename="cliTest.out";
@@ -46,7 +43,7 @@ public class CliTest {
 		try ( BufferedReader reader = new BufferedReader(new InputStreamReader( this.getClass().getResourceAsStream("/cliTestCommands.txt"), StandardCharsets.UTF_8 ) ) ) {
 			try ( PrintStream printStream = new PrintStream( new FileOutputStream(outputFilename) ) ) {
 				cli.setPrintStream(printStream);
-				cli.execAll(reader);
+				assert( cli.execAll(reader) == null );
 			}
 		}
 		
@@ -69,16 +66,19 @@ public class CliTest {
 	}
 	
 	public static void main(String[] args) throws IOException, IllegalInputCharException, UnexpectedEofException, InvokeCommandFailed {
-		CliAdapter cli = new CliAdapter();
-		cli.addMethods(cli);
+		CommandExecutorBase commandExecutor = new CommandExecutor();
+		CliAdapter cli = new CliAdapter(commandExecutor);
 		
 		cli.setPrompt("> ");
-		cli.setContinueOnError(true);
 		
 		if (args.length<1) {	// no argument, run in interactive mode
 			cli.execAll(new BufferedReader(new InputStreamReader(System.in)));
 			
 		} else {	// execute args as a command
+			
+			// we do not want continue on error in non-interactive mode
+			cli.setContinueOnError(false);
+			
 			CmdReturnType cmdReturn = cli.execCmd(args);
 			if (cmdReturn!=null)
 				System.out.println( cmdReturn );

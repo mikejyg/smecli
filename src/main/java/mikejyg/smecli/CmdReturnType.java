@@ -14,12 +14,19 @@ public class CmdReturnType {
 	 *
 	 */
 	static public enum ReturnCode {
-		SUCCESS,
+		OK,
+		EXIT,
+		END,
 		INVALID_COMMAND,
 		INVALID_ARGUMENT,
-		FAILURE_RECOVERABLE,	// can continue
+		FAILURE,	// can continue
 		FAILURE_UNRECOVERABLE	// cannot continue
-
+		, SCRIPT_ERROR_EXIT;			// used by sub-script to indicate script exit due to error 
+		
+		public boolean isOk() {
+			return ( this==OK || this==EXIT || this==END );
+		}
+		
 	};
 
 	private ReturnCode returnCode; 
@@ -33,6 +40,7 @@ public class CmdReturnType {
 	
 	public CmdReturnType(ReturnCode returnCode) {
 		this.returnCode = returnCode;
+		result="";
 	}
 	
 	public CmdReturnType(ReturnCode returnCode, String result) {
@@ -43,7 +51,7 @@ public class CmdReturnType {
 	@Override
 	public String toString() {
 		String str = returnCode.name();
-		if ( result!=null && !result.isEmpty() ) {
+		if ( !result.isEmpty() ) {
 			str = str + ' ' + result; 
 		}
 		return str;

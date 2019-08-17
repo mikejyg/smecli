@@ -1,1 +1,4 @@
 echo from a sub-script
+echo 123
+assert OK 123
+assert OK

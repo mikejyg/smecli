@@ -1,0 +1,5 @@
+localEcho
+localEcho on
+coe off
+. errExit1
+echo this should not happen in errExitTest!

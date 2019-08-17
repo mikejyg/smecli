@@ -15,27 +15,46 @@ public class CliUtils {
 	 * 
 	 * for now, no quoting or escape sequences are recognized.
 	 * 
-	 * @param argumentsStr
 	 * @return
 	 */
-	static public String[] toArgs(String argumentsStr) {
-		if (argumentsStr==null)
-			return null;
+	public static String[] toArgs(String argumentsStr) {
 		return argumentsStr.split("\\s+");
 	}
 	
 	/**
+	 * This is the way to get args[] from this structure.
+	 * 
+	 * If args[] is not already populated, it parses fromargumentStr, using white spaces as separators.
+	 * 
+	 */
+	public static String[] toArgs(CmdCallType cmdCall) {
+		if ( cmdCall.getArgs()!=null )
+			return cmdCall.getArgs();
+		else
+			return CliUtils.toArgs(cmdCall.getArgumentsStr());
+	}
+	
+	/**
+	 * Get the first argument. It uses the same mechanism as toArgs().
+	 * 
+	 * @param cmdCall
+	 */
+	public static String getArg0(CmdCallType cmdCall) {
+		String args[]=toArgs(cmdCall);
+		if (args.length==0)
+			return "";
+		else
+			return args[0];
+	}
+	
+	/**
 	 * remove everything after the comment symbol #. 
-	 * @param args
 	 * @return
 	 */
 	static public String[] removeEndComments(String args[]) {
-		if (args==null)
-			return null;
-		
 		int i=0;
 		for (String s : args) {
-			if ( s!=null && !s.isEmpty() && s.charAt(0)=='#' )
+			if ( !s.isEmpty() && s.charAt(0)=='#' )
 				break;
 			i++;
 		}

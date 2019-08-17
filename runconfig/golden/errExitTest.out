@@ -16,13 +16,17 @@ BUILD SUCCESSFUL in 0s
 off
 > OK
 on
-> . script1
-> echo script1
+> coe off
 OK
-script1
-> source script2
-> echo script2
+off
+> . errExit1
+> echo errExit1
 OK
-script2
-> end
-END
+errExit1
+> source errExit2
+> echo errExit2
+OK
+errExit2
+> ebcd
+INVALID_COMMAND
+SCRIPT_ERROR_EXIT
