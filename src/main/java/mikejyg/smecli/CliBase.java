@@ -276,8 +276,6 @@ public class CliBase {
 	}
 
 	protected CliSession getCurrentSession() {
-		if (sessionStack.isEmpty())
-			return null;
 		return sessionStack.lastElement();
 	}
 	

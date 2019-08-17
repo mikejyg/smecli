@@ -50,7 +50,7 @@ public class CommandExecutorBase {
 	 */
 	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
-		if (cmdCall==null)
+		if (cmdCall.isEmpty())
 			return null;	// no command was executed
 		
 		return execCmd(cmdCall);
