@@ -114,13 +114,10 @@ public class CliAdapter extends CliBase {
 		
 //		getPrintStream().println(filename + " execution done.");
 		
-		if (cmdReturn==null)
-			return null;
-		
 		if (cmdReturn.getReturnCode()==ReturnCode.SCRIPT_ERROR_EXIT)
 			return cmdReturn;
-		
-		return null;
+		else
+			return new CmdReturnType(ReturnCode.NOP);
 		
 	}
 	

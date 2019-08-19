@@ -87,7 +87,7 @@ public class CliBase {
 		if (cmdStruct!=null) {
 			CmdReturnType cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
 
-			if ( cmdReturn!=null && cmdReturn.getReturnCode()!=ReturnCode.SCRIPT_ERROR_EXIT ) {
+			if ( cmdReturn.getReturnCode()!=ReturnCode.NOP && cmdReturn.getReturnCode()!=ReturnCode.SCRIPT_ERROR_EXIT ) {
 				lastCmdReturn = cmdReturn;
 			}
 			
@@ -109,26 +109,24 @@ public class CliBase {
 	
 	/** 
 	 * @param cmdLine
-	 * @return null, if no command is found in the cmdLine.
 	 * @throws InvokeCommandFailed 
 	 */
 	public CmdReturnType execCmd(String cmdLine) throws InvokeCommandFailed {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(cmdLine);
 		if (cmdCall.isEmpty())
-			return null;			// no command was executed
+			return new CmdReturnType(ReturnCode.NOP);			// no command was executed
 			
 		return execCmd(cmdCall);
 	}
 
 	/** 
 	 * @param
-	 * @return null, if no command is found in args.
 	 * @throws InvokeCommandFailed 
 	 */
 	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
 		if (cmdCall.isEmpty())
-			return null;	// no command was executed
+			return new CmdReturnType(ReturnCode.NOP);	// no command was executed
 		
 		return execCmd(cmdCall);
 	}
@@ -163,8 +161,6 @@ public class CliBase {
 	 * @throws IllegalInputCharException 
 	 * @throws ExitAllSessions 
 	 * 
-	 * @return null, if no error. an error return, otherwise.
-	 * 
 	 * Conversions on using command returns and lastCmdReturn:
 	 *   Each command returns a CmdReturnType.
 	 *   Additionally, if the result is a solid result, it is persisted in the variable lastCmdReturn.
@@ -175,7 +171,6 @@ public class CliBase {
 	 *   The rationale is that when flow control commands succeed, they are transparent, or invisible.
 	 *   
 	 * possible return values:
-	 *   null: NOP, or a flow control command succeeds.
 	 *   SCRIPT_ERROR_EXIT: to exit cascadingly, due to an error while executing a script.
 	 *   others: solid results
 	 * 
@@ -214,7 +209,7 @@ public class CliBase {
 				throw new RuntimeException("failed to invoke: " + cmdLine);
 			}
 
-			if (cmdReturn==null)	// no command is executed.
+			if ( cmdReturn.getReturnCode()==ReturnCode.NOP )	// no command is executed.
 				continue;
 			
 			if (cmdReturn.getReturnCode()==ReturnCode.SCRIPT_ERROR_EXIT) {	// cascade exit
@@ -234,7 +229,7 @@ public class CliBase {
 			
 		}
 		
-		return null;
+		return new CmdReturnType(ReturnCode.NOP);
 	}
 	
 	/**

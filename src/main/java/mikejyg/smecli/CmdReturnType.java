@@ -14,6 +14,7 @@ public class CmdReturnType {
 	 *
 	 */
 	static public enum ReturnCode {
+		NOP,	// no command, comment only, a successful flow control execution...
 		OK,
 		EXIT,
 		END,
@@ -24,7 +25,7 @@ public class CmdReturnType {
 		, SCRIPT_ERROR_EXIT;			// used by sub-script to indicate script exit due to error 
 		
 		public boolean isOk() {
-			return ( this==OK || this==EXIT || this==END );
+			return ( this==NOP || this==OK || this==EXIT || this==END );
 		}
 		
 	};

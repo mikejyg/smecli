@@ -8,35 +8,33 @@ import java.util.Arrays;
  * Since a command can originate from 2 sources: an input stream, or as command line arguments (args[]),
  *   the argument can be either a single String, or String[].
  *   
- * For efficiency reasons, this structure accommodates both.
+ * This structure accommodates both.
  *  
  * @author jgu
  *
  */
 public class CmdCallType {
-	private String commandName;
+	private String commandName = new String();
+	
+	private boolean argumentsInArgsFlag=false;
 	
 	/**
 	 * contains the already parsed command-line args[].
-	 * If it is null, then use argumentsStr.
 	 */
-	private String args[];
+	private String[] args = new String[0];
 	
 	/**
-	 * if args[] is null, then this string containing all arguments.
-	 * otherwise, it references args[0].
+	 * This is a string of the entire arguments, except,
+	 *   when the arguments are in args[], it points to args[0] 
 	 */
-	private String argumentsStr;
+	private String argumentsStr=new String();
 
 	////////////////////////////////////////////////////////////
 	
 	/**
 	 * construct an empty cmdCall.
 	 */
-	public CmdCallType() {
-		commandName=new String();
-		argumentsStr = new String();
-	}
+	public CmdCallType() {}
 	
 	/**
 	 * constructor with a single parsed argument string.
@@ -55,12 +53,11 @@ public class CmdCallType {
 	 */
 	public CmdCallType(String commandName, String args[]) {
 		this.commandName = commandName;
+		
 		if (args.length!=0) {
-			this.args = args;
-			argumentsStr = args[0];
-			
-		} else {
-			argumentsStr="";
+			argumentsInArgsFlag=true;
+			this.args=args;
+			argumentsStr = args[0];			
 		}
 	}
 	
@@ -72,8 +69,9 @@ public class CmdCallType {
 	 * @return a string contains the entire arguments.
 	 */
 	public String toArgumentsString() {
-		if (args==null)
+		if ( ! argumentsInArgsFlag )
 			return argumentsStr;
+		
 		String str="";
 		for (String s : args) {
 			if (str.isEmpty())
@@ -127,10 +125,6 @@ public class CmdCallType {
 		return commandName;
 	}
 
-	/**
-	 * 
-	 * @return can be null.
-	 */
 	public String[] getArgs() {
 		return args;
 	}
@@ -139,5 +133,9 @@ public class CmdCallType {
 		return argumentsStr;
 	}
 	
+	public boolean isArgumentsInArgsFlag() {
+		return argumentsInArgsFlag;
+	}
+
 
 }

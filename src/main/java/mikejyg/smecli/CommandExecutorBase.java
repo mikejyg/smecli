@@ -45,13 +45,12 @@ public class CommandExecutorBase {
 	
 	/** 
 	 * @param
-	 * @return null, if args is null, or no command is found in args.
 	 * @throws InvokeCommandFailed 
 	 */
 	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
 		if (cmdCall.isEmpty())
-			return null;	// no command was executed
+			return new CmdReturnType(ReturnCode.NOP);	// no command was executed
 		
 		return execCmd(cmdCall);
 	}

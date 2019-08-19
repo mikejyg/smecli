@@ -17,6 +17,7 @@ import org.junit.Test;
 import mikejyg.smecli.CliCommands.InvokeCommandFailed;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 public class CliTest {
 
@@ -43,7 +44,7 @@ public class CliTest {
 		try ( BufferedReader reader = new BufferedReader(new InputStreamReader( this.getClass().getResourceAsStream("/cliTestCommands.txt"), StandardCharsets.UTF_8 ) ) ) {
 			try ( PrintStream printStream = new PrintStream( new FileOutputStream(outputFilename) ) ) {
 				cli.setPrintStream(printStream);
-				assert( cli.execAll(reader) == null );
+				assert( cli.execAll(reader).getReturnCode() == ReturnCode.NOP );
 			}
 		}
 		
@@ -79,9 +80,7 @@ public class CliTest {
 			// we do not want continue on error in non-interactive mode
 			cli.setContinueOnError(false);
 			
-			CmdReturnType cmdReturn = cli.execCmd(args);
-			if (cmdReturn!=null)
-				System.out.println( cmdReturn );
+			System.out.println( cli.execCmd(args) );
 		}
 		
 	}

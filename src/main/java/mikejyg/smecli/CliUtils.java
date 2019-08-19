@@ -28,7 +28,7 @@ public class CliUtils {
 	 * 
 	 */
 	public static String[] toArgs(CmdCallType cmdCall) {
-		if ( cmdCall.getArgs()!=null )
+		if ( cmdCall.isArgumentsInArgsFlag() )
 			return cmdCall.getArgs();
 		else
 			return CliUtils.toArgs(cmdCall.getArgumentsStr());
