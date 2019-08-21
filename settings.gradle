@@ -8,3 +8,6 @@
  */
 
 rootProject.name = 'smecli'
+
+include ':cloep'
+project(':cloep').projectDir = new File(settingsDir, '../cloep')

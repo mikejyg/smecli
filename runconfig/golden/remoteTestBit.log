@@ -1,0 +1,35 @@
+> Task :compileJava UP-TO-DATE
+> Task :processResources NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar UP-TO-DATE
+> Task :assemble UP-TO-DATE
+> Task :cloep:compileJava UP-TO-DATE
+> Task :compileTestJava UP-TO-DATE
+> Task :processTestResources UP-TO-DATE
+> Task :testClasses UP-TO-DATE
+> Task :cloep:processResources NO-SOURCE
+> Task :cloep:classes UP-TO-DATE
+> Task :cloep:jar UP-TO-DATE
+> Task :test UP-TO-DATE
+> Task :check UP-TO-DATE
+> Task :build UP-TO-DATE
+> Task :cloep:assemble UP-TO-DATE
+> Task :cloep:compileTestJava UP-TO-DATE
+> Task :cloep:processTestResources UP-TO-DATE
+> Task :cloep:testClasses UP-TO-DATE
+> Task :cloep:test UP-TO-DATE
+> Task :cloep:check UP-TO-DATE
+> Task :cloep:build UP-TO-DATE
+
+BUILD SUCCESSFUL in 0s
+10 actionable tasks: 10 up-to-date
+server port: 34046
+received cmdCall: abc defg
+received cmdCall: 123
+received cmdCall: 123
+received cmdCall: 123 345 678
+received cmdCall: exit
+execCmd() upon exit, all commands received.
+client session ended.
+exiting server...
+all done.

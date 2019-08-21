@@ -3,58 +3,47 @@ package mikejyg.socket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 /**
- * a tag-length-value packet
+ * length value packet, for packetizing a stream.
  * 
  * @author mikejyg
- * 
- * 32-bit packet type
- * 32-bit data length
- * data...
  *
  */
-public class TlvPacket {
+public class LvPacket {
 	public static class ReadException extends Exception {
 		private static final long serialVersionUID = 1L;
 	}
 	
-	public static final int HEADER_LENGTH=8;
+	public static final int HEADER_LENGTH=4;
 	
 	//////////////////////////////////////////////////////////////////
 	
-	private TlvPacketType packetType;
-	
-	private byte []  data;
+	private byte [] data;
 	
 	//////////////////////////////////////////////////////////////////
 	
-	public TlvPacket() {
-		packetType=TlvPacketType.CONTAINER;
-	}
-	
-	public TlvPacket(String str) {
-		packetType=TlvPacketType.STRING;
-		data = str.getBytes(StandardCharsets.UTF_8);
-	}
-	
-	public static TlvPacket wrap(byte[] data) {
-		TlvPacket tlvPacket = new TlvPacket();
-		tlvPacket.data = data;
-		return tlvPacket;
+	/**
+	 * create a packet object from a given byte array.
+	 * 
+	 * @param data
+	 * @return
+	 */
+	public static LvPacket wrap(byte[] data) {
+		LvPacket lvPacket = new LvPacket();
+		lvPacket.data = data;
+		return lvPacket;
 	}
 	
 	/**
-	 * read a packet from an input stream
+	 * read a packet from an input stream, de-serialize
 	 * @param inputStream
 	 * @return null to indicate socket closed.
 	 * @throws IOException 
 	 * @throws ReadException 
-	 * @throws IllegalValueException 
 	 */
-	public static TlvPacket read(InputStream inputStream) throws IOException, ReadException, TlvPacketType.IllegalValueException {
-		TlvPacket tlvPacket = new TlvPacket();
+	public static LvPacket read(InputStream inputStream) throws IOException, ReadException {
+		LvPacket lvPacket = new LvPacket();
 		
 		byte[] headerBytes = new byte[HEADER_LENGTH];
 		int k = inputStream.read(headerBytes);
@@ -63,23 +52,25 @@ public class TlvPacket {
 		
 		ByteBuffer bb = ByteBuffer.wrap(headerBytes);
 		
-		tlvPacket.packetType = TlvPacketType.getTlvPacketType(bb.getInt());
 		int length = bb.getInt();
 		
-		tlvPacket.data = new byte[length];
+		lvPacket.data = new byte[length];
 		
-		k = inputStream.read(tlvPacket.data);
+		k = inputStream.read(lvPacket.data);
 		if (k!=length)
 			throw new ReadException();	// failure to read all data
 		
-		return tlvPacket;
+		return lvPacket;
 		
 	}
 	
+	/**
+	 * serialize.
+	 * @return
+	 */
 	public byte[] toBytes() {
 		byte[] bytes = new byte[ data.length + HEADER_LENGTH];
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
-		bb.putInt(packetType.intValue());
 		bb.putInt(data.length);
 		bb.put(data);
 		
@@ -90,5 +81,5 @@ public class TlvPacket {
 		return data;
 	}
 
-	
+
 }

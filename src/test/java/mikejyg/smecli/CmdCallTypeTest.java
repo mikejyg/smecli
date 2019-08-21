@@ -1,6 +1,10 @@
 package mikejyg.smecli;
 
+import java.nio.ByteBuffer;
+
 import org.junit.Test;
+
+import mikejyg.socket.ByteBufferAccumulator;
 
 /**
  * unit tests for CmdCallType
@@ -8,9 +12,11 @@ import org.junit.Test;
 public class CmdCallTypeTest {
 
 	private void serdesTest(CmdCallType cmdCallType) {
-		byte [] cmdCallBytes = cmdCallType.toBytes();
+		ByteBufferAccumulator bba = new ByteBufferAccumulator();
+		cmdCallType.serialize(bba);
+		byte [] cmdCallBytes = bba.toBytes();
 		
-		CmdCallType c2 = new CmdCallType(cmdCallBytes);
+		CmdCallType c2 = new CmdCallType(ByteBuffer.wrap(cmdCallBytes));
 		
 		if ( ! cmdCallType.equals(c2) ) {
 			System.out.println(c2.toString());

@@ -3,12 +3,14 @@ package mikejyg.smecli;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 import mikejyg.smecli.CliCommands.InvokeCommandFailed;
+import mikejyg.smecli.CliPacketSerdes;
+import mikejyg.socket.ByteBufferAccumulator;
+import mikejyg.socket.LvPacket;
 import mikejyg.socket.PacketSocket;
-import mikejyg.socket.TlvPacket;
-import mikejyg.socket.TlvPacket.ReadException;
-import mikejyg.socket.TlvPacketType.IllegalValueException;
+import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
  * sends commands to a remote for execution, and receives returns.
@@ -21,27 +23,35 @@ public class RemoteCommandExecutor implements CommandExecutorIntf {
 	private Socket socket;
 	private PacketSocket packetSocket;
 	
+	private CliPacketSerdes cliPacketSerdes = new CliPacketSerdes();
+	
+	//////////////////////////////////////////////////////////
+	
 	@Override
 	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed {
 		try {
-			packetSocket.send(TlvPacket.wrap(cmdCall.toBytes()));
+			ByteBufferAccumulator bba = new ByteBufferAccumulator();
+			CliPacketSerdes.serialize(bba, cmdCall);
+			packetSocket.send(LvPacket.wrap(bba.toBytes()));
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new Error(e.getMessage());
 		}
 
-		TlvPacket tlvPacket;
+		LvPacket lvPacket;
 		try {
-			tlvPacket = packetSocket.receive();
-		} catch (IOException | ReadException | IllegalValueException e) {
+			lvPacket = packetSocket.receive();
+		} catch (IOException | LvPacket.ReadException e) {
 			e.printStackTrace();
 			throw new Error(e.getMessage());
 		}
 		
 		CmdReturnType cmdReturn;
 		try {
-			cmdReturn = new CmdReturnType(tlvPacket.getData());
-		} catch (mikejyg.smecli.CmdReturnType.ReturnCode.IllegalValueException e) {
+			Object obj = cliPacketSerdes.deserialize( ByteBuffer.wrap(lvPacket.getData()) );
+			cmdReturn = (CmdReturnType) obj;
+			
+		} catch (ReturnCode.IllegalValueException | CliPacketSerdes.DesException e) {
 			e.printStackTrace();
 			throw new Error(e.getMessage());
 		}
@@ -53,6 +63,8 @@ public class RemoteCommandExecutor implements CommandExecutorIntf {
 
 	@Override
 	public String toHelpString() {
+		// TODO: change to OOB messaging for this special case.
+		
 		CmdReturnType cmdReturn;
 		try {
 			cmdReturn = execCmd(new CmdCallType("help"));

@@ -2,6 +2,8 @@ package mikejyg.smecli;
 
 import java.nio.ByteBuffer;
 
+import mikejyg.socket.ByteBufferAccumulator;
+
 /**
  * this class is to wrap the 2 return values.
  * @author jgu
@@ -76,21 +78,31 @@ public class CmdReturnType {
 		this.returnCode = returnCode;
 		this.result = result;
 	}
-	
-	public byte[] toBytes() {
+
+	/**
+	 * 4 bytes return code
+	 * 4 bytes result length
+	 * ... result
+	 * 
+	 * @param bba
+	 */
+	public void serialize(ByteBufferAccumulator bba) {
 		byte [] resultBytes = result.getBytes(CmdCallType.charset);
-		int totalLength = 4 + 4 + resultBytes.length;
 		
-		ByteBuffer bb = ByteBuffer.allocate(totalLength);
+		ByteBuffer bb = ByteBuffer.allocate( 4 + 4 + resultBytes.length );
 		bb.putInt(returnCode.intValue());
 		bb.putInt(resultBytes.length);
 		bb.put(resultBytes);
 		
-		return bb.array();
+		bba.put(bb.array());
 	}
 	
-	public CmdReturnType(byte[] bytes) throws ReturnCode.IllegalValueException {
-		ByteBuffer bb = ByteBuffer.wrap(bytes);
+	/**
+	 * de-serialize
+	 * @param bytes
+	 * @throws ReturnCode.IllegalValueException
+	 */
+	public CmdReturnType(ByteBuffer bb) throws ReturnCode.IllegalValueException {
 		returnCode = ReturnCode.getReturnCode(bb.getInt());
 		int length = bb.getInt();
 		byte [] buf =new byte[length];

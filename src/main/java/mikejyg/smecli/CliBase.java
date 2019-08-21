@@ -2,6 +2,7 @@ package mikejyg.smecli;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.Stack;
 
@@ -72,8 +73,12 @@ public class CliBase {
 
 	///////////////////////////////////////////////////////////
 	
-	public CliBase(CommandExecutorIntf commandExecutor) {
+	public CliBase() {
 		cliCommands = new CliCommands();
+	}
+	
+	public CliBase(CommandExecutorIntf commandExecutor) {
+		this();
 		this.commandExecutor = commandExecutor;
 	}
 	
@@ -306,9 +311,25 @@ public class CliBase {
 		return lastCmdReturn;
 	}
 
+	public void setCommandExecutor(CommandExecutorIntf commandExecutor) {
+		this.commandExecutor = commandExecutor;
+	}
+
 	public CommandExecutorIntf getCommandExecutor() {
 		return commandExecutor;
 	}
 
+	/**
+	 * run an interactive session (fron stdin).
+	 * 
+	 * @throws IOException
+	 * @throws IllegalInputCharException
+	 * @throws UnexpectedEofException
+	 */
+	public void runInteractive() throws IOException, IllegalInputCharException, UnexpectedEofException {
+		setPrompt("> ");
+		execAll(new BufferedReader(new InputStreamReader(System.in)));
+	}
 	
+
 }	

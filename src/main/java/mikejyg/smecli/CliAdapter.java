@@ -28,6 +28,10 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  */
 public class CliAdapter extends CliBase {
 	
+	public CliAdapter() {
+		super();
+	}
+	
 	public CliAdapter(CommandExecutorIntf commandExecutor) {
 		super(commandExecutor);
 		CliAnnotation.addMethods(getCliCommands(), this);
