@@ -31,7 +31,7 @@ public class CliTest {
 
 	@Test
 	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException {
-		CommandExecutorBase commandExecutor = new CommandExecutor();
+		CommandExecutorIntf commandExecutor = new CommandExecutor();
 		CliAdapter cli = new CliAdapter(commandExecutor);
 		
 		cli.setPrompt("> ");
@@ -67,7 +67,7 @@ public class CliTest {
 	}
 	
 	public static void main(String[] args) throws IOException, IllegalInputCharException, UnexpectedEofException, InvokeCommandFailed {
-		CommandExecutorBase commandExecutor = new CommandExecutor();
+		CommandExecutorIntf commandExecutor = new CommandExecutor();
 		CliAdapter cli = new CliAdapter(commandExecutor);
 		
 		cli.setPrompt("> ");

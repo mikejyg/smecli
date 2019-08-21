@@ -1,5 +1,7 @@
 package mikejyg.smecli;
 
+import java.nio.ByteBuffer;
+
 /**
  * this class is to wrap the 2 return values.
  * @author jgu
@@ -14,18 +16,40 @@ public class CmdReturnType {
 	 *
 	 */
 	static public enum ReturnCode {
-		NOP,	// no command, comment only, a successful flow control execution...
-		OK,
-		EXIT,
-		END,
-		INVALID_COMMAND,
-		INVALID_ARGUMENT,
-		FAILURE,	// can continue
-		FAILURE_UNRECOVERABLE	// cannot continue
-		, SCRIPT_ERROR_EXIT;			// used by sub-script to indicate script exit due to error 
+		NOP(0),	// no command, comment only, a successful flow control execution...
+		OK(1),
+		EXIT(2),
+		END(3),
+		INVALID_COMMAND(4),
+		INVALID_ARGUMENT(5),
+		FAILURE(6),	// can continue
+		FAILURE_UNRECOVERABLE(7)	// cannot continue
+		, SCRIPT_ERROR_EXIT(8);			// used by sub-script to indicate script exit due to error 
+		
+		private int idValue;
+		
+		private ReturnCode(int idValue) {
+			this.idValue = idValue;
+		}
 		
 		public boolean isOk() {
 			return ( this==NOP || this==OK || this==EXIT || this==END );
+		}
+		
+		public int intValue() {
+			return idValue;
+		}
+
+		public static class IllegalValueException extends Exception {
+			private static final long serialVersionUID = 1L;
+		}
+		
+		public static ReturnCode getReturnCode(int intValue) throws IllegalValueException {
+			for ( ReturnCode rc : values() ) {
+				if (rc.intValue() == intValue)
+					return rc;
+			}
+			throw new IllegalValueException();
 		}
 		
 	};
@@ -44,9 +68,34 @@ public class CmdReturnType {
 		result="";
 	}
 	
+	/**
+	 * @param returnCode NOTE: not null.
+	 * @param result
+	 */
 	public CmdReturnType(ReturnCode returnCode, String result) {
 		this.returnCode = returnCode;
 		this.result = result;
+	}
+	
+	public byte[] toBytes() {
+		byte [] resultBytes = result.getBytes(CmdCallType.charset);
+		int totalLength = 4 + 4 + resultBytes.length;
+		
+		ByteBuffer bb = ByteBuffer.allocate(totalLength);
+		bb.putInt(returnCode.intValue());
+		bb.putInt(resultBytes.length);
+		bb.put(resultBytes);
+		
+		return bb.array();
+	}
+	
+	public CmdReturnType(byte[] bytes) throws ReturnCode.IllegalValueException {
+		ByteBuffer bb = ByteBuffer.wrap(bytes);
+		returnCode = ReturnCode.getReturnCode(bb.getInt());
+		int length = bb.getInt();
+		byte [] buf =new byte[length];
+		bb.get(buf);
+		result = new String(buf, CmdCallType.charset);
 	}
 	
 	@Override

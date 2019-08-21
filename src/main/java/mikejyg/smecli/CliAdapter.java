@@ -28,7 +28,7 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  */
 public class CliAdapter extends CliBase {
 	
-	public CliAdapter(CommandExecutorBase commandExecutor) {
+	public CliAdapter(CommandExecutorIntf commandExecutor) {
 		super(commandExecutor);
 		CliAnnotation.addMethods(getCliCommands(), this);
 		addCommands();
@@ -66,12 +66,10 @@ public class CliAdapter extends CliBase {
 				helpStr = helpStr + '\n' + cmd.toString();
 		}
 
-		for (CommandStruct cmd : getCommandExecutor().getCliCommands().getCommands()) {
-			if (helpStr.isEmpty())
-				helpStr = cmd.toString();
-			else
-				helpStr = helpStr + '\n' + cmd.toString();
-		}
+		if (helpStr.isEmpty())
+			helpStr = getCommandExecutor().toHelpString();
+		else
+			helpStr = helpStr + '\n' + getCommandExecutor().toHelpString();
 
 		return new CmdReturnType(ReturnCode.OK, helpStr);
 	}

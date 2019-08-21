@@ -11,12 +11,12 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
 public class CommandExecutor extends CommandExecutorBase {
 
 	public CommandExecutor() {
-		CliAnnotation.addMethods(getCliCommands(), this);
+		addMethods(this);
 		addCommands();
 	}
 	
 	private void addCommands() {
-		getCliCommands().addCommand("assert", null, "assert the value of the last result."
+		addCommand("assert", null, "assert the value of the last result."
 			+ " 1st argument the return code string, 2nd argument(optional) is is the result string."
 			, (CmdCallType cmdCall)->{
 				String [] args = CliUtils.toArgs(cmdCall);

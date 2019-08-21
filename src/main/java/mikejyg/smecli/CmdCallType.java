@@ -1,5 +1,9 @@
 package mikejyg.smecli;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -14,6 +18,8 @@ import java.util.Arrays;
  *
  */
 public class CmdCallType {
+	public static final Charset charset=StandardCharsets.UTF_8;
+	
 	private String commandName = new String();
 	
 	private boolean argumentsInArgsFlag=false;
@@ -38,12 +44,16 @@ public class CmdCallType {
 	
 	/**
 	 * constructor with a single parsed argument string.
-	 * @param commandName
-	 * @param argumentsStr
+	 * @param commandName	not null
+	 * @param argumentsStr	not null
 	 */
 	public CmdCallType(String commandName, String argumentsStr) {
 		this.commandName = commandName;
 		this.argumentsStr = argumentsStr;
+	}
+	
+	public CmdCallType(String commandName) {
+		this(commandName, "");
 	}
 	
 	/**
@@ -59,6 +69,124 @@ public class CmdCallType {
 			this.args=args;
 			argumentsStr = args[0];			
 		}
+	}
+	
+	/**
+	 * serialize.
+	 * @return
+	 */
+	public byte[] toBytes() {
+		ByteBuffer bb;
+		
+		byte [] cmdBytes = commandName.getBytes(charset);
+		
+		int totalSize = 4 + cmdBytes.length;	// length, string
+		totalSize++;							// byte, argumentsInArgsFlag
+		
+		if (argumentsInArgsFlag) {
+			
+			int totalArgsBytesSize=0;
+			
+			ArrayList<byte[]> argsByteList = new ArrayList<>();
+			
+			for (String arg : args) {
+				byte[] argsBytes = arg.getBytes(charset);
+				argsByteList.add(argsBytes);
+				totalArgsBytesSize += argsBytes.length;
+			}
+			
+			totalSize += 4;							// args.length
+			totalSize += args.length * 4;			// length for every arg
+			totalSize += totalArgsBytesSize;		// args
+			
+			bb = ByteBuffer.allocate(totalSize);
+			
+			bb.putInt(cmdBytes.length);
+			bb.put(cmdBytes);
+			bb.put( (byte)(argumentsInArgsFlag ? 1 : 0) );
+			
+			bb.putInt(args.length);
+			
+			for (byte[] argBytes : argsByteList) {
+				bb.putInt(argBytes.length);
+				bb.put(argBytes);
+			}
+			
+		} else {
+			byte[] argumentsStrBytes = argumentsStr.getBytes(charset);
+			totalSize += 4 + argumentsStrBytes.length;
+			
+			bb = ByteBuffer.allocate(totalSize);
+			
+			bb.putInt(cmdBytes.length);
+			bb.put(cmdBytes);
+			bb.put( (byte)(argumentsInArgsFlag ? 1 : 0) );
+		
+			bb.putInt(argumentsStrBytes.length);
+			bb.put(argumentsStrBytes);
+			
+		}
+		
+		return bb.array();		
+	}
+	
+	/**
+	 * de-serialize.
+	 * @param bytes
+	 */
+	public CmdCallType(byte[] bytes) {
+		ByteBuffer bb = ByteBuffer.wrap(bytes);
+		byte[] buf = new byte[bb.getInt()];
+		bb.get(buf);
+		commandName = new String(buf, charset);
+		byte b = bb.get();
+		if ( b == (byte)1 )
+			argumentsInArgsFlag = true;
+		
+		if (argumentsInArgsFlag) {
+			int argsCnt = bb.getInt();
+			
+			args = new String[argsCnt];
+			for (int i=0; i<argsCnt; i++) {
+				int length = bb.getInt();
+				buf = new byte[length];
+				bb.get(buf);
+				args[i] = new String(buf, charset);
+			}
+			
+		} else {
+			int length = bb.getInt();
+			buf = new byte[length];
+			bb.get(buf);
+			argumentsStr = new String(buf, charset);
+		}
+
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		CmdCallType c2 = (CmdCallType) obj;
+		if ( ! commandName.contentEquals(c2.commandName ) )
+				return false;
+		
+		if ( argumentsInArgsFlag != c2.argumentsInArgsFlag )
+			return false;
+		
+		if (argumentsInArgsFlag) {
+			if ( args.length != c2.args.length )
+				return false;
+
+			for ( int i=0; i<args.length; i++) {
+				if ( ! args[i].contentEquals(c2.args[i]))
+					return false;
+			}
+			
+			return true;
+			
+		} else {
+			return argumentsStr.contentEquals(c2.argumentsStr);
+		}
+		
 	}
 	
 	public boolean isEmpty() {

@@ -39,7 +39,7 @@ public class CliBase {
 	 */
 	private CliCommands cliCommands;
 	
-	private CommandExecutorBase commandExecutor;
+	private CommandExecutorIntf commandExecutor;
 	
 	// behavior options:
 	
@@ -72,7 +72,7 @@ public class CliBase {
 
 	///////////////////////////////////////////////////////////
 	
-	public CliBase(CommandExecutorBase commandExecutor) {
+	public CliBase(CommandExecutorIntf commandExecutor) {
 		cliCommands = new CliCommands();
 		this.commandExecutor = commandExecutor;
 	}
@@ -306,7 +306,7 @@ public class CliBase {
 		return lastCmdReturn;
 	}
 
-	public CommandExecutorBase getCommandExecutor() {
+	public CommandExecutorIntf getCommandExecutor() {
 		return commandExecutor;
 	}
 
