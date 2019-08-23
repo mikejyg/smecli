@@ -7,7 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -32,19 +34,22 @@ public class CliTest {
 	@Test
 	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException {
 		CommandExecutorIntf commandExecutor = new CommandExecutor();
-		CliAdapter cli = new CliAdapter(commandExecutor);
-		
-		cli.setPrompt("> ");
-		cli.setLocalEcho(true);
-
 		final String outputFilename="cliTest.out";
 		
 		// execute commands from cliTestCommands.txt and write to test.out
 		
-		try ( BufferedReader reader = new BufferedReader(new InputStreamReader( this.getClass().getResourceAsStream("/cliTestCommands.txt"), StandardCharsets.UTF_8 ) ) ) {
+		try ( InputStreamReader reader = new InputStreamReader( 
+				this.getClass().getResourceAsStream("/cliTestCommands.txt"), StandardCharsets.UTF_8 ) ) {
 			try ( PrintStream printStream = new PrintStream( new FileOutputStream(outputFilename) ) ) {
-				cli.setPrintStream(printStream);
-				assert( cli.execAll(reader).getReturnCode() == ReturnCode.NOP );
+				CliBase cliBase = new CliBase(commandExecutor);
+				cliBase.setPrintStream(printStream);
+
+				CliAdapter cli = new CliAdapter(cliBase);
+				cli.setReader(reader);
+				cli.setLocalEcho(true);
+				
+				cli.setContinueOnError(true);
+				assert( cli.execAll().getReturnCode() == ReturnCode.NOP );
 			}
 		}
 		
@@ -67,20 +72,23 @@ public class CliTest {
 	}
 	
 	public static void main(String[] args) throws IOException, IllegalInputCharException, UnexpectedEofException, InvokeCommandFailed {
-		CommandExecutorIntf commandExecutor = new CommandExecutor();
-		CliAdapter cli = new CliAdapter(commandExecutor);
-		
-		cli.setPrompt("> ");
+		CommandExecutor commandExecutor = new CommandExecutor();
 		
 		if (args.length<1) {	// no argument, run in interactive mode
-			cli.execAll(new BufferedReader(new InputStreamReader(System.in)));
+			try (Reader reader = new InputStreamReader(System.in) ) {
+				CliAdapter cli = commandExecutor.newCliAdapter(reader);
+				cli.setLocalEcho(false);
+				cli.setContinueOnError(true);
+				cli.execAll();
+			}
 			
 		} else {	// execute args as a command
+			CmdCallType cmdCall = CmdCallType.toCmdCall(args);
+			if (! cmdCall.isEmpty() )
+				System.out.println( commandExecutor.execCmd(cmdCall) );
+			else
+				System.out.println( "no command is found: " + Arrays.deepToString(args) );
 			
-			// we do not want continue on error in non-interactive mode
-			cli.setContinueOnError(false);
-			
-			System.out.println( cli.execCmd(args) );
 		}
 		
 	}

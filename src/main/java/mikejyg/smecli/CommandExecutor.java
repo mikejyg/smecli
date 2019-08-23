@@ -1,6 +1,16 @@
 package mikejyg.smecli;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+
 import mikejyg.smecli.CliAnnotation.CliCommand;
+import mikejyg.smecli.CliLineReader.IllegalInputCharException;
+import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
@@ -10,9 +20,26 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  */
 public class CommandExecutor extends CommandExecutorBase {
 
+	private CliBase cliBase;
+	
+	/**
+	 * hold an inactive session object here, 
+	 *   so that the settings of a new session can be customized.
+	 */
+	private CliSession cliSessionSettings;
+	
+	//////////////////////////////////////////////////////
+	
 	public CommandExecutor() {
 		addMethods(this);
 		addCommands();
+		
+		cliBase = new CliBase(this);
+		cliSessionSettings = new CliSession(cliBase);
+		
+		// setting default values for a sub-session
+		cliSessionSettings.setLocalEcho(true);
+		cliSessionSettings.setContinueOnError(false);
 	}
 	
 	private void addCommands() {
@@ -67,15 +94,77 @@ public class CommandExecutor extends CommandExecutorBase {
 		return new CmdReturnType(ReturnCode.OK, cmdCall.toArgumentsString());
 	}
 	
-	@CliCommand(commandName="exit", helpString = "exit current session with an optional argument.")
-	public CmdReturnType exitSession(CmdCallType cmdCall) {
-		return new CmdReturnType(ReturnCode.EXIT, CliUtils.getArg0(cmdCall));
+	@CliCommand(shorthands = {"?"}, helpString = "print help.")
+	public CmdReturnType help(CmdCallType cmdCall) {
+		return new CmdReturnType(ReturnCode.OK, toHelpString());
+	}
+	
+	/**
+	 * source a sub-script file from the classpath.
+	 * @param cmdCall
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws IllegalInputCharException
+	 * @throws UnexpectedEofException
+	 * @throws ExitAllSessions
+	 */
+	@CliCommand(shorthands= {"."}, helpString = "parameter: script_filename\texecute the script file in a new session.")
+	public CmdReturnType source(CmdCallType cmdCall) throws FileNotFoundException, IOException, IllegalInputCharException, UnexpectedEofException {
+		String args[] = CliUtils.toArgs(cmdCall);
+		
+		if (args.length < 1) {
+			return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "missing argument");
+		} else if (args.length>1) {
+			return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "excessive arguments after " + args[0]);
+		}
+		
+		String filename = args[0];
+		
+//		getPrintStream().println("executing " + filename + "...");
+		
+		InputStream inputStream;
+		try {
+			inputStream = new FileInputStream(filename);
+		} catch (FileNotFoundException e) {
+			return new CmdReturnType(ReturnCode.FAILURE, "failed to open file: " + filename);
+		}
+		
+		CmdReturnType cmdReturn;
+		try ( InputStreamReader reader = new InputStreamReader( inputStream, StandardCharsets.UTF_8 ) )  {
+			cmdReturn = newCliAdapter(reader).execAll();
+		}
+		
+//		getPrintStream().println(filename + " execution done.");
+		
+		if (cmdReturn.getReturnCode()==ReturnCode.SCRIPT_ERROR_EXIT)
+			return cmdReturn;
+		else
+			return new CmdReturnType(ReturnCode.NOP);
+		
 	}
 
-	@CliCommand(helpString = "exit current session and all parent sessions with an optional argument.")
-	public CmdReturnType end(CmdCallType cmdCall) {
-		return new CmdReturnType(ReturnCode.END, CliUtils.getArg0(cmdCall));
+	/**
+	 * create a new CLI session.
+	 * @param reader
+	 * @return
+	 */
+	public CliAdapter newCliAdapter() {
+		CliAdapter cliAdapter = new CliAdapter(cliSessionSettings);
+		return cliAdapter;
 	}
-
-
+	
+	/**
+	 * create a new CLI session with a reader.
+	 * @param reader
+	 * @return
+	 */
+	public CliAdapter newCliAdapter(Reader reader) {
+		CliAdapter cliAdapter = newCliAdapter();
+		cliAdapter.setReader(reader);
+		return cliAdapter;
+	}
+	
+	
 }
+

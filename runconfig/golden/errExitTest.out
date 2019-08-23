@@ -1,20 +1,8 @@
-> Task :compileJava UP-TO-DATE
-> Task :processResources NO-SOURCE
-> Task :classes UP-TO-DATE
-> Task :jar UP-TO-DATE
-> Task :assemble UP-TO-DATE
-> Task :compileTestJava UP-TO-DATE
-> Task :processTestResources UP-TO-DATE
-> Task :testClasses UP-TO-DATE
-> Task :test UP-TO-DATE
-> Task :check UP-TO-DATE
-> Task :build UP-TO-DATE
-
-BUILD SUCCESSFUL in 0s
-5 actionable tasks: 5 up-to-date
-> OK
-off
-> OK
+> localEcho
+OK
+on
+> localEcho on
+OK
 on
 > coe off
 OK

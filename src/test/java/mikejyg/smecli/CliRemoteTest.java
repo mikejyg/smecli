@@ -1,6 +1,7 @@
 package mikejyg.smecli;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 import org.junit.Test;
 
@@ -15,13 +16,11 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  *
  */
 public class CliRemoteTest {
-	// for server
-	private Thread serverThread;
-	private SocketCli socketCli;
 	
-	// for client
-	private RemoteCommandExecutor rce;
-	private CliAdapter cli;
+	private class SocketCliThread {
+		public SocketCli socketCli;
+		public Thread serverThread;
+	}
 	
 	// run options
 	ArgsParser argsParser = new ArgsParser();
@@ -76,32 +75,24 @@ public class CliRemoteTest {
 		argsParser.Parse(args);
 	}
 	
-	private void startServer(CommandExecutorIntf commandExecutor, int port) throws InterruptedException {
-		socketCli = new SocketCli(commandExecutor, port);
+	private SocketCliThread startServer(CommandExecutorIntf commandExecutor, int port) throws InterruptedException {
+		SocketCliThread socketCliThread = new SocketCliThread();
 		
-		serverThread = new Thread(()->{
+		socketCliThread.socketCli = new SocketCli(commandExecutor, port);
+		
+		socketCliThread.serverThread = new Thread(()->{
 			try {
-				socketCli.accept();
+				socketCliThread.socketCli.accept();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}	
 		});
-		serverThread.start();
+		socketCliThread.serverThread.start();
 		
 		// wait for server to be ready
 		Thread.sleep(1000);
-	}
-	
-	private void createClient(int port) throws IOException {
-		rce = new RemoteCommandExecutor();
-		rce.connect("localhost", port);
-		cli = new CliAdapter(rce);
-	}
-	
-	private void shutdown() throws IOException, InterruptedException {
-		socketCli.setStop(true);
-		rce.close();
-		serverThread.join();
+		
+		return socketCliThread;
 	}
 	
 	/**
@@ -114,15 +105,26 @@ public class CliRemoteTest {
 	 */
 	public void runInteractive() throws InterruptedException, IOException, IllegalInputCharException, UnexpectedEofException {
 		// create a command execution server
-		startServer(new CommandExecutor(), 0);
+		SocketCliThread socketCliThread = startServer(new CommandExecutor(), 0);
 
 		// create a client
-		createClient(socketCli.getPort());
 		
-		cli.runInteractive();	
+		RemoteCommandExecutor rce = new RemoteCommandExecutor();
+		rce.connect("localhost", socketCliThread.socketCli.getPort());
+		
+		CliBase cliBase = new CliBase();
+		cliBase.setCommandExecutorRef(rce);
+		CliSession cli = new CliAdapter(cliBase);
+		
+		try (InputStreamReader reader = new InputStreamReader(System.in) ) {
+			cli.setReader(new InputStreamReader(System.in));
+			cli.execAll();
+		}
 		
 		// shutting down
-		shutdown();
+		socketCliThread.socketCli.setStop(true);
+		rce.close();
+		socketCliThread.serverThread.join();
 		
 		System.out.println("runInteractive() done.");
 	}
@@ -132,7 +134,7 @@ public class CliRemoteTest {
 		int[] cmdCnt= {0};
 		
 		// create a command execution server
-		startServer(new CommandExecutorIntf() {
+		SocketCliThread socketCliThread = startServer(new CommandExecutorIntf() {
 			
 			@Override
 			public String toHelpString() {
@@ -154,17 +156,19 @@ public class CliRemoteTest {
 			
 		}, 0);
 		
-		// create a client
-		createClient(socketCli.getPort());
+		RemoteCommandExecutor rce = new RemoteCommandExecutor();
+		rce.connect("localhost", socketCliThread.socketCli.getPort());
 
-		cli.execCmd(new CmdCallType("abc", "defg"));
-		cli.execCmd(new CmdCallType("123", ""));
-		cli.execCmd(new CmdCallType("123", new String[]{""}));
-		cli.execCmd(new CmdCallType("123", new String[]{"345","678"}));
-		cli.execCmd(new CmdCallType("exit"));
+		rce.execCmd(new CmdCallType("abc", "defg"));
+		rce.execCmd(new CmdCallType("123", ""));
+		rce.execCmd(new CmdCallType("123", new String[]{""}));
+		rce.execCmd(new CmdCallType("123", new String[]{"345","678"}));
+		rce.execCmd(new CmdCallType("exit"));
 
 		// shutting down
-		shutdown();
+		socketCliThread.socketCli.setStop(true);
+		rce.close();
+		socketCliThread.serverThread.join();
 		
 		System.out.println("all done.");
 	}
@@ -185,11 +189,11 @@ public class CliRemoteTest {
 		} else if (bitFlag) {
 			test();
 			
-		} else if (serverFlag) {
-			socketCli = new SocketCli(new CommandExecutor(), serverPort);
+		} else if (serverFlag) {	// run a server only
+			SocketCli socketCli = new SocketCli(new CommandExecutor(), serverPort);
 			socketCli.accept();
 			
-		} else if (clientFlag) {
+		} else if (clientFlag) {	// run a client only
 			CliClient cliClient = new CliClient();
 			cliClient.connect("localhost", clientRemotePort);
 			cliClient.runInteractive();

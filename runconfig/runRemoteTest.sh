@@ -1,4 +1,1 @@
-cd ..
-./gradlew build
-cd runconfig
 java -cp ../build/libs/smecli.jar:../build/classes/java/test:../../cloep/build/classes/java/main mikejyg.smecli.CliRemoteTest "$@"

@@ -6,14 +6,14 @@ import java.io.Reader;
 
 import org.junit.Test;
 
-import mikejyg.smecli.CliBase.EofException;
+import mikejyg.smecli.CliLineReader;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 
 public class CliLineReaderTest {
 	
 	@Test
-	public void test() throws IOException, EofException, IllegalInputCharException, UnexpectedEofException {
+	public void test() throws IOException, CliLineReader.EofException, IllegalInputCharException, UnexpectedEofException {
 		String golden[]= {
 				"command 1st line",
 				"c2 2nd line\ncontinued \n   2nd done.",
@@ -31,7 +31,7 @@ public class CliLineReaderTest {
 				String cliLine;
 				try {
 					cliLine = cliLineReader.readCliLine();
-				} catch (EofException e) {
+				} catch (CliLineReader.EofException e) {
 					break;
 				}
 

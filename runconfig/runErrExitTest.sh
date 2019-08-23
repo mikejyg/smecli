@@ -4,6 +4,6 @@ logfile=errExitTest.out
 
 rm $logfile
 
-./runCliTest.sh . errExitTest.script | tee $logfile
-echo compare with golden...
+./runCliTest.sh . errExitTest.script > $logfile
+echo comparing with golden...
 diff golden/$logfile $logfile

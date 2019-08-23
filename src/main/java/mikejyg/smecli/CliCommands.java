@@ -74,5 +74,8 @@ public class CliCommands {
 		return commands;
 	}
 
+	public boolean isEmpty() {
+		return commands.isEmpty();
+	}
 
 }

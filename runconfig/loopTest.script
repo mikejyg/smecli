@@ -1,0 +1,25 @@
+repeat 2
+echo 1
+done
+
+repeat 1
+echo 2
+done
+
+repeat 2
+done
+
+repeat 1
+done
+
+repeat 3
+echo 5
+done
+
+repeat 2
+echo 6
+repeat 3
+echo 7
+done
+done
+

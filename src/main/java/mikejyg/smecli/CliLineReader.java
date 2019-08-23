@@ -3,8 +3,6 @@ package mikejyg.smecli;
 import java.io.IOException;
 import java.io.Reader;
 
-import mikejyg.smecli.CliBase.EofException;
-
 /**
  * This class is for reading an CLI line from a buffered reader.
  * 
@@ -38,7 +36,10 @@ import mikejyg.smecli.CliBase.EofException;
  *
  */
 public class CliLineReader {
-	
+	static public class EofException extends Exception {
+		private static final long serialVersionUID = 1L;
+	};
+		
 	static public class IllegalInputCharException extends Exception {
 		private static final long serialVersionUID = 1L;
 	};
@@ -243,5 +244,6 @@ public class CliLineReader {
 		return cliLineBuilder.toString().trim();
 		
 	}
+	
 	
 }
