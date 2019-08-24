@@ -6,9 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
 
 import mikejyg.smecli.CliAnnotation.CliCommand;
 import mikejyg.smecli.CliCommands.CommandStruct;
@@ -28,38 +25,15 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  */
 public class CliAdapter extends CliSession {
 	
-	// for loops
-	
-	private List<String> cmdLineBuffer = new ArrayList<>();
-	private int clbCounter = 0;
-	
-	private class LoopStruct {
-		public int iterations;		// remaining iterations to do
-		
-		// indexes into cmdLineBuffer
-		public int beginIdx;
-		
-		/**
-		 * called when a loop start instruction is encountered.
-		 * @param repeats
-		 */
-		public LoopStruct(int repeats) {
-			iterations = repeats;
-			beginIdx = clbCounter;	// points to the one AFTER the loop start instruction.
-		}
-		
-	}
-	
-	private Stack<LoopStruct> loopStack = new Stack<>();
-	private LoopStruct currentLoopStruct = null; 
-	
-	/////////////////////////////////////////////
-	
 	public CliAdapter(CliBase cliBase) {
 		super(cliBase);
 		initCliCommands();
 	}
 	
+	/**
+	 * copy settings from a parent session.
+	 * @param parentSession
+	 */
 	public CliAdapter(CliSession parentSession) {
 		super(parentSession);
 		initCliCommands();
@@ -71,7 +45,12 @@ public class CliAdapter extends CliSession {
 		addCommands();
 	}
 	
-	private void addCommands() {
+	@Override
+	public CliAdapter newSession() {
+		return new CliAdapter(this);
+	}
+	
+	protected void addCommands() {
 		getCliCommands().addCommand("continueOnError", new String[]{"coe"}, "set whether to continue on command execution error."
 				+ " if no argument is given, prints out current state, otherwise use argument on or off."
 				, (CmdCallType cmdCall)->{
@@ -91,76 +70,7 @@ public class CliAdapter extends CliSession {
 
 					return new CmdReturnType(ReturnCode.OK, isContinueOnError() ? "on" : "off");
 				});
-		
-		getCliCommands().addCommand("repeat", null, "repeat the following commands, until done, for argument times"
-				, (CmdCallType cmdCall)->{
-			String arg = CliUtils.getArg0(cmdCall);
-			if ( arg.isEmpty() )
-				return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "missing argument.");
-			int iterations = Integer.parseInt(arg);
-			
-			if (iterations<1)
-				return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "iterations less than 1.");
-			
-			loopStack.add(new LoopStruct(iterations));
-			currentLoopStruct = loopStack.lastElement();
-			return new CmdReturnType(ReturnCode.NOP);
-		});
-		
-		getCliCommands().addCommand("done", null, "close of a loop."
-				, (CmdCallType cmdCall)->{
-			if (currentLoopStruct==null)
-				return new CmdReturnType(ReturnCode.INVALID_COMMAND, "no matching loop start.");
-
-			currentLoopStruct.iterations--;
-			if ( currentLoopStruct.iterations==0 
-					|| clbCounter == currentLoopStruct.beginIdx		// empty loop 
-			) {
-				loopStack.pop();
-				if (loopStack.isEmpty()) {
-					currentLoopStruct=null;
-					cmdLineBuffer.clear();
-					clbCounter=0;
-				} else
-					currentLoopStruct = loopStack.lastElement();
-				
-			} else {
-				clbCounter = currentLoopStruct.beginIdx;
-			}
-			return new CmdReturnType(ReturnCode.NOP);
-		});
-
-	}
-	
-	@Override
-	protected String fetchCmdLine() throws IOException, IllegalInputCharException, UnexpectedEofException {
-		String cmdLine  = null;
-		
-		if ( clbCounter < cmdLineBuffer.size() ) {	// cmd line is in the buffer
-			return cmdLineBuffer.get(clbCounter++);
-		}
-		
-		cmdLine = super.fetchCmdLine();
-		
-		if ( ! loopStack.isEmpty() ) {	// accumulating
-			if (cmdLine!=null) {
-				cmdLineBuffer.add(cmdLine);
-				clbCounter++;
-				
-			} else {	// EOF while looping
-				getPrintStream().println("fetchCmdLine() warning: missing matching done for loop.");
-				
-//				// cancel all loops
-//				
-//				loopStack.clear();
-//				currentLoopStruct = null;
-//				cmdLineBuffer.clear();
-//				clbCounter=0;
-//				return null;
-			}
-		}
-		return cmdLine;
-	}
+	}		
 	
 	@CliCommand(shorthands = {"?"}, helpString = "print help.")
 	public CmdReturnType help(CmdCallType cmdCall) {
@@ -213,7 +123,7 @@ public class CliAdapter extends CliSession {
 		
 		CmdReturnType cmdReturn;
 		try ( InputStreamReader reader = new InputStreamReader( inputStream, StandardCharsets.UTF_8 ) )  {
-			CliAdapter newSession = new CliAdapter(this);
+			CliAdapter newSession = newSession();
 			
 			// change settings for a sub-session
 			newSession.setLocalEcho(true);

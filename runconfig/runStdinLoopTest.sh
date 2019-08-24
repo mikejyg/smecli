@@ -1,1 +1,0 @@
-./runInteractive.sh < loopTest.script

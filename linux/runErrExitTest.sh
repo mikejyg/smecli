@@ -1,0 +1,1 @@
+../runconfig/runErrExitTest.sh

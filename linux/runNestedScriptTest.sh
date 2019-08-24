@@ -1,0 +1,1 @@
+../runconfig/runNestedScriptTest.sh

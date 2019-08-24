@@ -1,0 +1,73 @@
+> repeat 2
+> echo 1
+OK
+1
+> done
+> echo 1
+OK
+1
+> done
+> 
+> repeat 1
+> echo 2
+OK
+2
+> done
+> 
+> repeat 2
+> done
+> done
+> 
+> repeat 1
+> done
+> 
+> repeat 3
+> echo 5
+OK
+5
+> done
+> echo 5
+OK
+5
+> done
+> echo 5
+OK
+5
+> done
+> 
+> repeat 2
+> echo 6
+OK
+6
+> repeat 3
+> echo 7
+OK
+7
+> done
+> echo 7
+OK
+7
+> done
+> echo 7
+OK
+7
+> done
+> done
+> echo 6
+OK
+6
+> repeat 3
+> echo 7
+OK
+7
+> done
+> echo 7
+OK
+7
+> done
+> echo 7
+OK
+7
+> done
+> done
+> 

@@ -53,6 +53,11 @@ public class CliSession {
 	 */
 	private CliCommands cliCommands = new CliCommands();;
 	
+	/**
+	 * interactive means, reading user input from console.
+	 */
+	private boolean interactiveFlag;
+	
 	/////////////////////////////////////////////////////
 	
 	public CliSession(CliBase cliBase) {
@@ -71,6 +76,15 @@ public class CliSession {
 		this.continueOnError = parentSession.continueOnError;
 	}
 	
+	/**
+	 * generate a new session, after the current session.
+	 * This method is meant to be polymorphic.
+	 * @return
+	 */
+	public CliSession newSession() {
+		return new CliSession(this);
+	}
+	
 	public void setReader(Reader reader) {
 		cliLineReader = new CliLineReader(reader);
 	}
@@ -78,7 +92,7 @@ public class CliSession {
 	/**
 	 * @throws InvokeCommandFailed
 	 */
-	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed {
+	private CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed {
 		// do built-in command first...
 		CommandStruct cmdStruct = getCliCommands().getCommand(cmdCall.getCommandName());
 		
@@ -89,8 +103,8 @@ public class CliSession {
 		else
 			cmdReturn = getCommandExecutorRef().execCmd(cmdCall);
 			
-		if ( cmdReturn.getReturnCode()!=ReturnCode.NOP && cmdReturn.getReturnCode()!=ReturnCode.SCRIPT_ERROR_EXIT )
-			setLastCmdReturn(cmdReturn);
+		if ( cmdReturn.getReturnCode().isCmdExecResult() )
+			setLastCmdExecResult(cmdReturn);
 			
 		return cmdReturn;
 	}
@@ -99,7 +113,10 @@ public class CliSession {
 	 * @param cmdLine
 	 * @throws InvokeCommandFailed 
 	 */
-	public CmdReturnType execCmd(String cmdLine) throws InvokeCommandFailed {
+	private CmdReturnType execCmd(String cmdLine) throws InvokeCommandFailed {
+		if (getCliBaseRef().getCmdExecListener()!=null)
+			getCliBaseRef().getCmdExecListener().accept(cmdLine);
+		
 		CmdCallType cmdCall = CmdCallType.toCmdCall(cmdLine);
 		if (cmdCall.isEmpty())
 			return new CmdReturnType(ReturnCode.NOP);			// no command was executed
@@ -107,30 +124,6 @@ public class CliSession {
 		return execCmd(cmdCall);
 	}
 
-	/** 
-	 * @param
-	 * @throws InvokeCommandFailed 
-	 */
-	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
-		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
-		if (cmdCall.isEmpty())
-			return new CmdReturnType(ReturnCode.NOP);	// no command was executed
-		
-		return execCmd(cmdCall);
-	}
-
-	/**
-	 * override this method to get the command returns.
-	 * 
-	 * @param cmdReturn
-	 */
-	protected void processResults(CmdReturnType cmdReturn) {
-		getPrintStream().println(cmdReturn.getReturnCode().name());
-		
-		if ( ! cmdReturn.getResult().isEmpty() )
-			getPrintStream().println(cmdReturn.getResult());
-	}
-	
 	/**
 	 * @return null if EOF
 	 * @throws IOException
@@ -156,9 +149,9 @@ public class CliSession {
 	 * @throws IllegalInputCharException 
 	 * @throws ExitAllSessions 
 	 * 
-	 * Conversions on using command returns and lastCmdReturn:
+	 * Conversions on using command returns and lastCmdExecResult:
 	 *   Each command returns a CmdReturnType.
-	 *   Additionally, if the result is a solid result, it is persisted in the variable lastCmdReturn.
+	 *   Additionally, if the result is a solid result, it is persisted in the variable lastCmdExecResult.
 	 *   A solid result is,
 	 *     error executing the command,
 	 *     or, success executing a non-flow control command (e.g. source).
@@ -173,21 +166,27 @@ public class CliSession {
 	public CmdReturnType execAll() throws IOException, UnexpectedEofException, IllegalInputCharException {
 		while ( !isEndFlag() ) {
 			
-			if (!getPrompt().isEmpty()) {
+			if ( ! cliBaseRef.isPrompted() && ! getPrompt().isEmpty() ) {
 				getPrintStream().print(getPrompt());
 				getPrintStream().flush();
+				cliBaseRef.setPrompted(true);
 			}
 			
 			String cmdLine = fetchCmdLine();
 			
 			if (cmdLine==null) {
-				getPrintStream().println("EOF - exiting...");
+//				getPrintStream().println("EOF - exiting...");
 				break;
 			}
+			
+			// interactive - input from console, the prompt is consumed by user input.
+			if (interactiveFlag)
+				cliBaseRef.setPrompted(false);
 			
 			if (isLocalEcho()) {
 				getPrintStream().println(cmdLine);
 				getPrintStream().flush();
+				cliBaseRef.setPrompted(false);
 			}
 			
 			if ( !cmdLine.isEmpty() && cmdLine.charAt(0)=='#') {
@@ -210,38 +209,38 @@ public class CliSession {
 				return cmdReturn;				// return SCRIPT_ERROR_EXIT
 				
 			} else if (cmdReturn.getReturnCode()==ReturnCode.EXIT) {
-				processResults(cmdReturn);
+				cliBaseRef.getCmdReturnListener().accept(cmdReturn);
 				break;
 				
 			} else if (cmdReturn.getReturnCode()==ReturnCode.END) {
-				processResults(cmdReturn);
+				cliBaseRef.getCmdReturnListener().accept(cmdReturn);
 				setEndFlag(true);
 				break;
 				
 			} else if ( ! cmdReturn.getReturnCode().isOk() ) {	// error
 				if ( ! isContinueOnError() ) {
-					processResults(cmdReturn);
+					cliBaseRef.getCmdReturnListener().accept(cmdReturn);
 					return new CmdReturnType(ReturnCode.SCRIPT_ERROR_EXIT);	// initiate cascade exit
 				}
 			}
 
-			processResults(cmdReturn);
+			cliBaseRef.getCmdReturnListener().accept(cmdReturn);
 			
 		}
 		
 		return new CmdReturnType(ReturnCode.NOP);
 	}
 	
-	public CliLineReader getCliLineReader() {
+	protected CliLineReader getCliLineReader() {
 		return cliLineReader;
 	}
 
-	public CmdReturnType getLastCmdReturn() {
-		return cliBaseRef.getLastCmdReturn();
+	protected CmdReturnType getLastCmdExecResult() {
+		return cliBaseRef.getLastCmdExecResult();
 	}
 
-	public void setLastCmdReturn(CmdReturnType lastCmdReturn) {
-		cliBaseRef.setLastCmdReturn(lastCmdReturn);
+	public void setLastCmdExecResult(CmdReturnType lastCmdExecResult) {
+		cliBaseRef.setLastCmdExecResult(lastCmdExecResult);
 	}
 
 	public boolean isLocalEcho() {
@@ -260,11 +259,11 @@ public class CliSession {
 		this.continueOnError = continueOnError;
 	}
 
-	public CliBase getCliBaseRef() {
+	protected CliBase getCliBaseRef() {
 		return cliBaseRef;
 	}
 
-	public PrintStream getPrintStream() {
+	protected PrintStream getPrintStream() {
 		return getCliBaseRef().getPrintStream();
 	}
 
@@ -288,6 +287,10 @@ public class CliSession {
 		return cliCommands;
 	}
 
+	public void setInteractiveFlag(boolean interactiveFlag) {
+		this.interactiveFlag = interactiveFlag;
+	}
+
 	/**
 	 * run an interactive session (fron stdin).
 	 * @throws IOException
@@ -297,6 +300,7 @@ public class CliSession {
 	public static void runInteractive(CliSession cli) throws IOException, UnexpectedEofException, IllegalInputCharException {
 		try (InputStreamReader reader = new InputStreamReader(System.in) ) {
 			cli.setReader( reader );
+			cli.setInteractiveFlag(true);
 			cli.execAll();
 		}
 	}

@@ -38,6 +38,15 @@ public class CmdReturnType {
 			return ( this==NOP || this==OK || this==EXIT || this==END );
 		}
 		
+		/**
+		 * Whether the return is a result of a command execution.
+		 * NOP, or other flow control returns are not considered results of command executions.  
+		 * @return
+		 */
+		public boolean isCmdExecResult() {
+			return this!=NOP && this!=SCRIPT_ERROR_EXIT; 
+		}
+		
 		public int intValue() {
 			return idValue;
 		}

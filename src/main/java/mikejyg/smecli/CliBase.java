@@ -1,6 +1,7 @@
 package mikejyg.smecli;
 
 import java.io.PrintStream;
+import java.util.function.Consumer;
 
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
@@ -17,21 +18,50 @@ public class CliBase {
 	
 	private boolean endFlag=false;	// exit all (nested) sessions.
 	
-	private CmdReturnType lastCmdReturn = new CmdReturnType(ReturnCode.OK);
+	private CmdReturnType lastCmdExecResult = new CmdReturnType(ReturnCode.OK);
 
 	/**
 	 * where to print out things, including prompt, results, errors, status...
 	 */
 	private PrintStream printStream = System.out;
 
+	/**
+	 * whether there is an prompt outstanding.
+	 */
+	private boolean prompted;
+	
+	/**
+	 * an optional listener for capturing all command executions.
+	 */
+	private Consumer<String> cmdExecListener;
+	
+	private Consumer<CmdReturnType> cmdReturnListener;
+	
 	/////////////////////////////////////////////////
 	
 	public CliBase() {}
 	
 	public CliBase(CommandExecutorIntf commandExecutor) {
 		this.commandExecutorRef = commandExecutor;
+		cmdReturnListener = (r)->{ processResults(r); };
 	}
 	
+	/**
+	 * override this method to get the command returns.
+	 * 
+	 * @param cmdReturn
+	 */
+	protected void processResults(CmdReturnType cmdReturn) {
+		getPrintStream().println(cmdReturn.getReturnCode().name());
+		
+		if ( ! cmdReturn.getResult().isEmpty() ) {
+			getPrintStream().println(cmdReturn.getResult());
+			setPrompted(false);
+		}
+	}
+	
+	/////////////////////////////////////////////////
+
 	public CommandExecutorIntf getCommandExecutorRef() {
 		return commandExecutorRef;
 	}
@@ -40,12 +70,12 @@ public class CliBase {
 		this.commandExecutorRef = commandExecutorRef;
 	}
 
-	public CmdReturnType getLastCmdReturn() {
-		return lastCmdReturn;
+	public CmdReturnType getLastCmdExecResult() {
+		return lastCmdExecResult;
 	}
 
-	public void setLastCmdReturn(CmdReturnType lastCmdReturn) {
-		this.lastCmdReturn = lastCmdReturn;
+	public void setLastCmdExecResult(CmdReturnType lastCmdExecResult) {
+		this.lastCmdExecResult = lastCmdExecResult;
 	}
 
 	public String getPrompt() {
@@ -70,6 +100,30 @@ public class CliBase {
 	
 	public void setEndFlag(boolean endFlag) {
 		this.endFlag = endFlag;
+	}
+
+	public boolean isPrompted() {
+		return prompted;
+	}
+
+	public void setPrompted(boolean prompted) {
+		this.prompted = prompted;
+	}
+
+	public Consumer<String> getCmdExecListener() {
+		return cmdExecListener;
+	}
+
+	public void setCmdExecListener(Consumer<String> cmdExecListener) {
+		this.cmdExecListener = cmdExecListener;
+	}
+
+	public Consumer<CmdReturnType> getCmdReturnListener() {
+		return cmdReturnListener;
+	}
+
+	public void setCmdReturnListener(Consumer<CmdReturnType> cmdReturnListener) {
+		this.cmdReturnListener = cmdReturnListener;
 	}
 
 

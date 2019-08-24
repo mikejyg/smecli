@@ -13,7 +13,7 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  */
 public class CliClient {
 	private CliBase cliBase = new CliBase();
-	private CliSession cli = new CliAdapter(cliBase);
+	private CliSession cli = new CliLoop(cliBase);
 	
 	private RemoteCommandExecutor rce;
 

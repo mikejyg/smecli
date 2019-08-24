@@ -2,6 +2,5 @@
 
 pushd $(dirname $0)
 rm cliTest.out
-cd runconfig
-rm *.out *.log
 popd
+rm *.out *.log *.transcript

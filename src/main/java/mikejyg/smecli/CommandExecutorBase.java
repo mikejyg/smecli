@@ -22,13 +22,13 @@ public class CommandExecutorBase implements CommandExecutorIntf {
 	/**
 	 * last result of a non-flow control command.
 	 */
-	private CmdReturnType lastCmdReturn;
+	private CmdReturnType lastCmdExecResult;
 	
 	////////////////////////////////////////////////////////////////
 	
 	public CommandExecutorBase() {
 		cliCommands = new CliCommands();
-		lastCmdReturn = new CmdReturnType(ReturnCode.OK);
+		lastCmdExecResult = new CmdReturnType(ReturnCode.OK);
 	}
 	
 	/**
@@ -39,13 +39,16 @@ public class CommandExecutorBase implements CommandExecutorIntf {
 		CommandStruct cmdStruct = cliCommands.getCommand(cmdCall.getCommandName());
 		
 		if (cmdStruct==null) {
-			lastCmdReturn = new CmdReturnType(ReturnCode.INVALID_COMMAND);
-			return lastCmdReturn;
+			lastCmdExecResult = new CmdReturnType(ReturnCode.INVALID_COMMAND);
+			return lastCmdExecResult;
 		}
 		
-		lastCmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
+		CmdReturnType cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
 		
-		return lastCmdReturn;
+		if ( cmdReturn.getReturnCode().isCmdExecResult() )
+			lastCmdExecResult = cmdReturn;
+		
+		return cmdReturn;
 	}
 	
 	@Override
@@ -64,16 +67,16 @@ public class CommandExecutorBase implements CommandExecutorIntf {
 	 * @param
 	 * @throws InvokeCommandFailed 
 	 */
-//	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
-//		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
-//		if (cmdCall.isEmpty())
-//			return new CmdReturnType(ReturnCode.NOP);	// no command was executed
-//		
-//		return execCmd(cmdCall);
-//	}
+	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
+		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
+		if (cmdCall.isEmpty())
+			return new CmdReturnType(ReturnCode.NOP);	// no command was executed
+		
+		return execCmd(cmdCall);
+	}
 	
-	public CmdReturnType getLastCmdReturn() {
-		return lastCmdReturn;
+	public CmdReturnType getLastCmdExecResult() {
+		return lastCmdExecResult;
 	}
 
 	public List<CommandStruct> getCommandList() {

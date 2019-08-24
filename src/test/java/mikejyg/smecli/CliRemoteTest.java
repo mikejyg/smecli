@@ -72,7 +72,7 @@ public class CliRemoteTest {
 			argsParser.printHelp();
 		});
 		
-		argsParser.Parse(args);
+		argsParser.parse(args);
 	}
 	
 	private SocketCliThread startServer(CommandExecutorIntf commandExecutor, int port) throws InterruptedException {
@@ -114,10 +114,11 @@ public class CliRemoteTest {
 		
 		CliBase cliBase = new CliBase();
 		cliBase.setCommandExecutorRef(rce);
-		CliSession cli = new CliAdapter(cliBase);
+		CliSession cli = new CliLoop(cliBase);
 		
 		try (InputStreamReader reader = new InputStreamReader(System.in) ) {
 			cli.setReader(new InputStreamReader(System.in));
+			cli.setInteractiveFlag(true);
 			cli.execAll();
 		}
 		

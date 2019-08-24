@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.function.BiFunction;
 
 import mikejyg.smecli.CliAnnotation.CliCommand;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
@@ -28,6 +29,8 @@ public class CommandExecutor extends CommandExecutorBase {
 	 */
 	private CliSession cliSessionSettings;
 	
+	private BiFunction<CliSession, Reader, CliSession> newClisessionFunc;
+	
 	//////////////////////////////////////////////////////
 	
 	public CommandExecutor() {
@@ -40,6 +43,13 @@ public class CommandExecutor extends CommandExecutorBase {
 		// setting default values for a sub-session
 		cliSessionSettings.setLocalEcho(true);
 		cliSessionSettings.setContinueOnError(false);
+		
+		// default new session function, generate a CliAdapter object.
+		newClisessionFunc = (sessionSettings, reader) -> {
+			CliAdapter cliAdapter = new CliAdapter(sessionSettings);
+			cliAdapter.setReader(reader);
+			return cliAdapter;
+		};
 	}
 	
 	private void addCommands() {
@@ -50,14 +60,14 @@ public class CommandExecutor extends CommandExecutorBase {
 				if (args.length<1)
 					return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "missing argument.");
 				
-				if ( ! args[0].equals(getLastCmdReturn().getReturnCode().name()) ) {
-					return new CmdReturnType(ReturnCode.FAILURE, "return code mismatch: " + getLastCmdReturn().getReturnCode().name()
+				if ( ! args[0].equals(getLastCmdExecResult().getReturnCode().name()) ) {
+					return new CmdReturnType(ReturnCode.FAILURE, "return code mismatch: " + getLastCmdExecResult().getReturnCode().name()
 							+ " vs " + args[0]);
 				}
 				
 				if ( args.length >=2) {
-					if ( ! args[1].equals(getLastCmdReturn().getResult()) ) {
-						return new CmdReturnType(ReturnCode.FAILURE, "result mismatch: " + getLastCmdReturn().getResult()
+					if ( ! args[1].equals(getLastCmdExecResult().getResult()) ) {
+						return new CmdReturnType(ReturnCode.FAILURE, "result mismatch: " + getLastCmdExecResult().getResult()
 								+ " vs " + args[1]);
 					}
 				}
@@ -132,7 +142,7 @@ public class CommandExecutor extends CommandExecutorBase {
 		
 		CmdReturnType cmdReturn;
 		try ( InputStreamReader reader = new InputStreamReader( inputStream, StandardCharsets.UTF_8 ) )  {
-			cmdReturn = newCliAdapter(reader).execAll();
+			cmdReturn = newCliSession(reader).execAll();
 		}
 		
 //		getPrintStream().println(filename + " execution done.");
@@ -145,26 +155,22 @@ public class CommandExecutor extends CommandExecutorBase {
 	}
 
 	/**
-	 * create a new CLI session.
-	 * @param reader
-	 * @return
-	 */
-	public CliAdapter newCliAdapter() {
-		CliAdapter cliAdapter = new CliAdapter(cliSessionSettings);
-		return cliAdapter;
-	}
-	
-	/**
 	 * create a new CLI session with a reader.
 	 * @param reader
 	 * @return
 	 */
-	public CliAdapter newCliAdapter(Reader reader) {
-		CliAdapter cliAdapter = newCliAdapter();
-		cliAdapter.setReader(reader);
-		return cliAdapter;
+	public CliSession newCliSession(Reader reader) {
+		return newClisessionFunc.apply(cliSessionSettings, reader);
 	}
-	
-	
+
+	public void setNewClisessionFunc(BiFunction<CliSession, Reader, CliSession> newClisessionFunc) {
+		this.newClisessionFunc = newClisessionFunc;
+	}
+
+	public CliBase getCliBase() {
+		return cliBase;
+	}
+
+
 }
 
