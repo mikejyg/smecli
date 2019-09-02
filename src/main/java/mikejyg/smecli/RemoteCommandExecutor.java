@@ -5,7 +5,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
-import mikejyg.smecli.CliCommands.InvokeCommandFailed;
 import mikejyg.smecli.CliPacketSerdes;
 import mikejyg.socket.ByteBufferAccumulator;
 import mikejyg.socket.LvPacket;
@@ -13,7 +12,8 @@ import mikejyg.socket.PacketSocket;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
- * sends commands to a remote for execution, and receives returns.
+ * A command executor, that executes commands remotely.
+ * It sends commands to a remote server for execution, and receives returns.
  * 
  * @author jgu
  *

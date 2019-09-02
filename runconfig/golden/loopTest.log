@@ -8,20 +8,16 @@ OK
 OK
 1
 > done
-> 
 > repeat 1
 > echo 2
 OK
 2
 > done
-> 
 > repeat 2
 > done
 > done
-> 
 > repeat 1
 > done
-> 
 > repeat 3
 > echo 5
 OK
@@ -35,7 +31,6 @@ OK
 OK
 5
 > done
-> 
 > repeat 2
 > echo 6
 OK
@@ -71,9 +66,7 @@ OK
 7
 > done
 > done
-> 
-> NOP
-run the script in a sub-session
+> run the script in a sub-session
 > > repeat 2
 > echo 1
 OK
@@ -83,20 +76,16 @@ OK
 OK
 1
 > done
-> 
 > repeat 1
 > echo 2
 OK
 2
 > done
-> 
 > repeat 2
 > done
 > done
-> 
 > repeat 1
 > done
-> 
 > repeat 3
 > echo 5
 OK
@@ -110,7 +99,6 @@ OK
 OK
 5
 > done
-> 
 > repeat 2
 > echo 6
 OK
@@ -146,5 +134,4 @@ OK
 7
 > done
 > done
-> 
 > 

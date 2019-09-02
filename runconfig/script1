@@ -1,3 +1,4 @@
 echo script1
+assert OK script1
 source script2
 echo back from script2

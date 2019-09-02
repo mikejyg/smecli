@@ -9,7 +9,23 @@ import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
-public class CliLoop extends CliAdapter {
+/**
+ * A session with basic and loop commands.
+ * 
+ * This session includes the basic session commands, provided by SessionCommands class, 
+ *   and its own loop commands.
+ * 
+ * @author mikejyg
+ *
+ */
+public class SessionWithLoop extends SessionBase {
+	
+	@SuppressWarnings("unused")
+	private SessionCommands sessionCommands;
+	
+	// for the source command
+//	private SourceCommandExecutor sourceCommandExecutor;
+	
 	// for loops
 	
 	private List<String> cmdLineBuffer = new ArrayList<>();
@@ -37,30 +53,47 @@ public class CliLoop extends CliAdapter {
 	
 	/////////////////////////////////////////////
 	
-	public CliLoop(CliBase cliBase) {
-		super(cliBase);
+	public SessionWithLoop(CommandExecutorIntf commandExecutor) {
+		super(commandExecutor);
+		initCommands();
+	}
+	
+	public SessionWithLoop(SessionCommon sessionCommonRef) {
+		super(sessionCommonRef);
+		initCommands();
 	}
 	
 	/**
 	 * copy settings from a parent session.
 	 * @param parentSession
 	 */
-	public CliLoop(CliSession parentSession) {
+	public SessionWithLoop(SessionBase parentSession) {
 		super(parentSession);
+		initCommands();
+	}
+	
+	private void initCommands() {
+		// add basic commands
+		sessionCommands = new SessionCommands(this);
+		
+		// add the source command
+//		sourceCommandExecutor = new SourceCommandExecutor( ()->{
+//			return new SessionWithLoop(this);
+//		});
+//		CliAnnotation.addMethods(this, sourceCommandExecutor);
+		
+		addCommands();
 	}
 	
 	@Override
-	public CliLoop newSession() {
-		return new CliLoop(this);
+	public SessionWithLoop newSession() {
+		return new SessionWithLoop(this);
 	}
 
 	/////////////////////////////////////////////
 	
-	@Override
 	protected void addCommands() {
-		super.addCommands();
-		
-		getCliCommands().addCommand("repeat", null, "repeat the following commands, until done, for argument times"
+		addCommand("repeat", null, "repeat the following commands, until done, for argument times"
 				, (CmdCallType cmdCall)->{
 			String arg = CliUtils.getArg0(cmdCall);
 			if ( arg.isEmpty() )
@@ -75,7 +108,7 @@ public class CliLoop extends CliAdapter {
 			return new CmdReturnType(ReturnCode.NOP);
 		});
 		
-		getCliCommands().addCommand("done", null, "close of a loop."
+		addCommand("done", null, "close of a loop."
 				, (CmdCallType cmdCall)->{
 			if (currentLoopStruct==null)
 				return new CmdReturnType(ReturnCode.INVALID_COMMAND, "no matching loop start.");
@@ -116,7 +149,9 @@ public class CliLoop extends CliAdapter {
 				clbCounter++;
 				
 			} else {	// EOF while looping
-				getPrintStream().println("fetchCmdLine() warning: missing matching done for loop.");
+				
+				// TODO
+//				getPrintWriter().print("fetchCmdLine() warning: missing matching done for loop.\n");
 				
 //				// cancel all loops
 //				

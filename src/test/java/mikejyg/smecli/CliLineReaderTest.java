@@ -36,7 +36,7 @@ public class CliLineReaderTest {
 				}
 
 				System.out.print(cnt);
-				System.out.println( ": " + cliLine );
+				System.out.print( ": " + cliLine + '\n' );
 				
 				assert( golden[cnt].contentEquals(cliLine) );
 				

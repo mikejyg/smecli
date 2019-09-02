@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import mikejyg.cloep.ArgsParser;
 import mikejyg.cloep.ArgsParser.ParseException;
-import mikejyg.smecli.CliCommands.InvokeCommandFailed;
+import mikejyg.smecli.CommandExecutorIntf.InvokeCommandFailed;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 
@@ -112,14 +112,13 @@ public class CliRemoteTest {
 		RemoteCommandExecutor rce = new RemoteCommandExecutor();
 		rce.connect("localhost", socketCliThread.socketCli.getPort());
 		
-		CliBase cliBase = new CliBase();
-		cliBase.setCommandExecutorRef(rce);
-		CliSession cli = new CliLoop(cliBase);
+		SessionBase session = new SessionWithLoop(new SessionCommon(rce));
 		
 		try (InputStreamReader reader = new InputStreamReader(System.in) ) {
-			cli.setReader(new InputStreamReader(System.in));
-			cli.setInteractiveFlag(true);
-			cli.execAll();
+			ConsoleSession consoleSession = new ConsoleSession(session);
+			consoleSession.setReader(new InputStreamReader(System.in));
+			consoleSession.setInteractiveFlag(true);
+			consoleSession.execAll();
 		}
 		
 		// shutting down
@@ -127,7 +126,7 @@ public class CliRemoteTest {
 		rce.close();
 		socketCliThread.serverThread.join();
 		
-		System.out.println("runInteractive() done.");
+		System.out.print("runInteractive() done.\n");
 	}
 	
 	@Test
@@ -144,12 +143,12 @@ public class CliRemoteTest {
 			
 			@Override
 			public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed {
-				System.out.println("received cmdCall: " + cmdCall.toString());
+				System.out.print("received cmdCall: " + cmdCall.toString() + '\n');
 				cmdCnt[0]++;
 				
 				if (cmdCall.getCommandName().equals("exit")) {
 					assert(cmdCnt[0]==5);
-					System.out.println("execCmd() upon exit, all commands received.");
+					System.out.print("execCmd() upon exit, all commands received.\n");
 				}
 				
 				return new CmdReturnType(CmdReturnType.ReturnCode.OK, "1");
@@ -171,7 +170,7 @@ public class CliRemoteTest {
 		rce.close();
 		socketCliThread.serverThread.join();
 		
-		System.out.println("all done.");
+		System.out.print("all done.\n");
 	}
 
 	/**
@@ -201,8 +200,8 @@ public class CliRemoteTest {
 			cliClient.close();
 			
 		} else {
-			System.out.println("no action specified.");
-			System.out.println("usages:");
+			System.out.print("no action specified.\n");
+			System.out.print("usages:\n");
 			argsParser.printHelp();
 			System.exit(-1);
 		}

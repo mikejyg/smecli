@@ -5,8 +5,9 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 
-import mikejyg.smecli.CliCommands.InvokeCommandFailed;
+import mikejyg.smecli.CommandExecutorIntf.InvokeCommandFailed;
 import mikejyg.smecli.CliPacketSerdes.DesException;
 import mikejyg.smecli.CliPacketSerdes.Id;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
@@ -71,13 +72,17 @@ public class SocketCli {
 			packetSocket.send(LvPacket.wrap(bba.toBytes()));
 		}
 	}
-	
-	public void accept() throws IOException {
+
+	/**
+	 * @param serverPortListener a call back function to get the listening port.
+	 * @throws IOException
+	 */
+	public void accept(Consumer<Integer> serverPortListener) throws IOException {
 		try (ServerSocket serverSocket = new ServerSocket()) {
 			serverSocket.bind(new InetSocketAddress(port));
 
 			port = serverSocket.getLocalPort();
-			System.out.println("server port: " + port);
+			serverPortListener.accept(port);
 
 			while (!stop) {
 				try (Socket clientSocket = serverSocket.accept()) {
@@ -88,14 +93,18 @@ public class SocketCli {
 					e.printStackTrace();
 				}
 	
-				System.out.println("client session ended.");
+				System.out.print("client session ended.\n");
 			}
 
-			System.out.println("exiting server...");
+			System.out.print("exiting server...\n");
 			
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
+	}
+
+	public void accept() throws IOException {
+		accept( port->{ System.out.print("server port: " + port + '\n'); } );
 	}
 	
 	public int getPort() {

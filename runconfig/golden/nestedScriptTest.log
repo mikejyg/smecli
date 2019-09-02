@@ -8,10 +8,11 @@ on
 > echo script1
 OK
 script1
+> assert OK script1
+OK
 > source script2
 > echo script2
 OK
 script2
 > end
 END
-NOP

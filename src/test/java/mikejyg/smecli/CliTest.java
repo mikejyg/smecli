@@ -3,13 +3,10 @@ package mikejyg.smecli;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -19,7 +16,7 @@ import org.junit.Test;
 
 import mikejyg.cloep.ArgsParser;
 import mikejyg.cloep.ArgsParser.ParseException;
-import mikejyg.smecli.CliCommands.InvokeCommandFailed;
+import mikejyg.smecli.CommandExecutorIntf.InvokeCommandFailed;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
@@ -38,36 +35,41 @@ public class CliTest {
 	
 	//////////////////////////////////////////////////////////////////////////
 	
-	static public String printToString(Consumer<PrintStream> printer) {
+	/**
+	 * let a function that prints to a print writer, to print a string. 
+	 * @param printer
+	 * @return
+	 */
+	static public String printToString(Consumer<PrintWriter> printer) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		PrintStream ps = new PrintStream(baos);
+		PrintWriter writer = new PrintWriter(baos);
 
-		printer.accept(ps);
+		printer.accept(writer);
 		return new String(baos.toByteArray(), StandardCharsets.UTF_8);			
 	}
-
 
 	//////////////////////////////////////////////////////////////////////////
 
 	@Test
 	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException {
-		CommandExecutorIntf commandExecutor = new CommandExecutor();
-		final String outputFilename="cliTest.out";
+		CommandExecutor commandExecutor = new CommandExecutor();
 		
+		SessionBase session = new SessionWithLoop(commandExecutor);
+		ConsoleSession consoleSession = new ConsoleSession(session);
+		
+		final String outputFilename="cliTest.out";
 		// execute commands from cliTestCommands.txt and write to test.out
 		
 		try ( InputStreamReader reader = new InputStreamReader( 
 				this.getClass().getResourceAsStream("/cliTestCommands.txt"), StandardCharsets.UTF_8 ) ) {
-			try ( PrintStream printStream = new PrintStream( new FileOutputStream(outputFilename) ) ) {
-				CliBase cliBase = new CliBase(commandExecutor);
-				cliBase.setPrintStream(printStream);
-
-				CliLoop cli = new CliLoop(cliBase);
-				cli.setReader(reader);
-				cli.setLocalEcho(true);
+			try ( PrintWriter printWriter = new PrintWriter(outputFilename) ) {
 				
-				cli.setContinueOnError(true);
-				assert( cli.execAll().getReturnCode() == ReturnCode.NOP );
+				consoleSession.setPrintWriter(printWriter);
+
+				consoleSession.setReader(reader);
+				consoleSession.setLocalEcho(true);
+				
+				assert( consoleSession.execAll().getReturnCode() == ReturnCode.NOP );
 			}
 		}
 		
@@ -106,37 +108,46 @@ public class CliTest {
 	}
 	
 	public void execute() throws IOException, UnexpectedEofException, IllegalInputCharException, InvokeCommandFailed {
-		CommandExecutor commandExecutor = new CommandExecutor();
-
-		Writer writer=null;
+		CommandExecutorWithSource commandExecutor = new CommandExecutorWithSource();
+		SessionCommon sessionCommon = new SessionCommon(commandExecutor);
+		ConsoleSession consoleSession = new ConsoleSession(sessionCommon);
+	
+		commandExecutor.setNewCliSessionFunc(()->{return consoleSession;});
+		
+		PrintWriter writer=null;
 		if ( transcriptFilename != null ) {
-			writer = new FileWriter(transcriptFilename);
-			new CliSessionTranscriptor(writer, commandExecutor.getCliBase());
+			consoleSession.setContinueOnError(false);
+
+			writer = new PrintWriter(transcriptFilename);
+			sessionCommon.setSessionTranscriptor( new SessionTranscriptor(writer) );
 		}
 		
-		// customize commandExector, so that it uses CliLoop for new sessions.
-		commandExecutor.setNewClisessionFunc( (sessionSettings, reader)->{
-			CliLoop cliAdapter = new CliLoop(sessionSettings);
-			cliAdapter.setReader(reader);
-			return cliAdapter;
-		});
-		
 		if (commandStrs!=null) {
-			System.out.println( commandExecutor.execCmd(commandStrs) );
+			consoleSession.setContinueOnError(false);
+
+			consoleSession.setLocalEcho(true);
+			CmdReturnType cmdReturn = commandExecutor.execCmd(commandStrs);
+			consoleSession.flushPrintWriter();
+
+			if ( cmdReturn.getReturnCode() != ReturnCode.NOP )
+				System.out.print( cmdReturn.toString() + '\n' );
+			
 			
 		} else if (interactiveFlag) {
 
-			try (Reader reader = new InputStreamReader(System.in)) {
-				CliSession cli = commandExecutor.newCliSession(reader);
+			try (Reader reader = new InputStreamReader(System.in) ) {
 				
-				cli.setLocalEcho(false);
-				cli.setContinueOnError(true);
-				cli.setInteractiveFlag(true);
-				cli.execAll();
+				consoleSession.setReader(reader);
+				
+				consoleSession.setInteractiveFlag(true);
+				consoleSession.execAll();
+				
+				consoleSession.flushPrintWriter();
+				
 			}
 			
 		} else {
-			System.out.println("no action selected or performed.");
+			System.out.print("no action selected or performed.\n");
 		}
 
 		if (writer!=null)

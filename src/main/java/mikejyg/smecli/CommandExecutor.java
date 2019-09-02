@@ -1,17 +1,6 @@
 package mikejyg.smecli;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.util.function.BiFunction;
-
 import mikejyg.smecli.CliAnnotation.CliCommand;
-import mikejyg.smecli.CliLineReader.IllegalInputCharException;
-import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
@@ -21,59 +10,31 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  */
 public class CommandExecutor extends CommandExecutorBase {
 
-	private CliBase cliBase;
-	
 	/**
-	 * hold an inactive session object here, 
-	 *   so that the settings of a new session can be customized.
+	 * last result of a non-flow control command.
 	 */
-	private CliSession cliSessionSettings;
-	
-	private BiFunction<CliSession, Reader, CliSession> newClisessionFunc;
+	private CmdReturnType lastCmdExecResult;
 	
 	//////////////////////////////////////////////////////
 	
 	public CommandExecutor() {
 		addMethods(this);
 		addCommands();
+		lastCmdExecResult = new CmdReturnType(ReturnCode.OK);
+	}
+	
+	@Override
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed  {
+		CmdReturnType cmdReturn = super.execCmd(cmdCall);
 		
-		cliBase = new CliBase(this);
-		cliSessionSettings = new CliSession(cliBase);
+		if ( cmdReturn.getReturnCode().isCmdExecResult() )
+			lastCmdExecResult = cmdReturn;
 		
-		// setting default values for a sub-session
-		cliSessionSettings.setLocalEcho(true);
-		cliSessionSettings.setContinueOnError(false);
-		
-		// default new session function, generate a CliAdapter object.
-		newClisessionFunc = (sessionSettings, reader) -> {
-			CliAdapter cliAdapter = new CliAdapter(sessionSettings);
-			cliAdapter.setReader(reader);
-			return cliAdapter;
-		};
+		return cmdReturn;
 	}
 	
 	private void addCommands() {
-		addCommand("assert", null, "assert the value of the last result."
-			+ " 1st argument the return code string, 2nd argument(optional) is is the result string."
-			, (CmdCallType cmdCall)->{
-				String [] args = CliUtils.toArgs(cmdCall);
-				if (args.length<1)
-					return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "missing argument.");
-				
-				if ( ! args[0].equals(getLastCmdExecResult().getReturnCode().name()) ) {
-					return new CmdReturnType(ReturnCode.FAILURE, "return code mismatch: " + getLastCmdExecResult().getReturnCode().name()
-							+ " vs " + args[0]);
-				}
-				
-				if ( args.length >=2) {
-					if ( ! args[1].equals(getLastCmdExecResult().getResult()) ) {
-						return new CmdReturnType(ReturnCode.FAILURE, "result mismatch: " + getLastCmdExecResult().getResult()
-								+ " vs " + args[1]);
-					}
-				}
-		
-				return new CmdReturnType(ReturnCode.OK);
-			});
+		AssertCommand.addToCliCommands(this, ()->{ return lastCmdExecResult; });
 	}
 	
 	@CliCommand(helpString = "sleep for specified time (seconds in double).")
@@ -109,68 +70,6 @@ public class CommandExecutor extends CommandExecutorBase {
 		return new CmdReturnType(ReturnCode.OK, toHelpString());
 	}
 	
-	/**
-	 * source a sub-script file from the classpath.
-	 * @param cmdCall
-	 * @return
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws IllegalInputCharException
-	 * @throws UnexpectedEofException
-	 * @throws ExitAllSessions
-	 */
-	@CliCommand(shorthands= {"."}, helpString = "parameter: script_filename\texecute the script file in a new session.")
-	public CmdReturnType source(CmdCallType cmdCall) throws FileNotFoundException, IOException, IllegalInputCharException, UnexpectedEofException {
-		String args[] = CliUtils.toArgs(cmdCall);
-		
-		if (args.length < 1) {
-			return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "missing argument");
-		} else if (args.length>1) {
-			return new CmdReturnType(ReturnCode.INVALID_ARGUMENT, "excessive arguments after " + args[0]);
-		}
-		
-		String filename = args[0];
-		
-//		getPrintStream().println("executing " + filename + "...");
-		
-		InputStream inputStream;
-		try {
-			inputStream = new FileInputStream(filename);
-		} catch (FileNotFoundException e) {
-			return new CmdReturnType(ReturnCode.FAILURE, "failed to open file: " + filename);
-		}
-		
-		CmdReturnType cmdReturn;
-		try ( InputStreamReader reader = new InputStreamReader( inputStream, StandardCharsets.UTF_8 ) )  {
-			cmdReturn = newCliSession(reader).execAll();
-		}
-		
-//		getPrintStream().println(filename + " execution done.");
-		
-		if (cmdReturn.getReturnCode()==ReturnCode.SCRIPT_ERROR_EXIT)
-			return cmdReturn;
-		else
-			return new CmdReturnType(ReturnCode.NOP);
-		
-	}
-
-	/**
-	 * create a new CLI session with a reader.
-	 * @param reader
-	 * @return
-	 */
-	public CliSession newCliSession(Reader reader) {
-		return newClisessionFunc.apply(cliSessionSettings, reader);
-	}
-
-	public void setNewClisessionFunc(BiFunction<CliSession, Reader, CliSession> newClisessionFunc) {
-		this.newClisessionFunc = newClisessionFunc;
-	}
-
-	public CliBase getCliBase() {
-		return cliBase;
-	}
-
 
 }
 

@@ -12,22 +12,25 @@ import mikejyg.smecli.CliLineReader.UnexpectedEofException;
  *
  */
 public class CliClient {
-	private CliBase cliBase = new CliBase();
-	private CliSession cli = new CliLoop(cliBase);
-	
 	private RemoteCommandExecutor rce;
-
+	private SessionBase sessionBase;
+	private ConsoleSession consoleSession;
+	
 	/////////////////////////////////////////////////////////
 	
-	public void connect(String hostname, int port) throws IOException {
+	public CliClient() {
 		rce = new RemoteCommandExecutor();
-		cliBase.setCommandExecutorRef(rce);
-		
+		sessionBase = new SessionWithLoop(new SessionCommon(rce));
+		consoleSession = new ConsoleSession(sessionBase);
+	}
+	
+	public void connect(String hostname, int port) throws IOException {
 		rce.connect(hostname, port);
 	}
 	
 	public void runInteractive() throws IOException, UnexpectedEofException, IllegalInputCharException {
-		CliSession.runInteractive(cli);
+		ConsoleSession.runInteractive(consoleSession);
+		consoleSession.flushPrintWriter();
 	}
 
 	public void close() throws IOException {

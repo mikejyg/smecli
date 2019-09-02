@@ -1,10 +1,8 @@
 package mikejyg.smecli;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
-import mikejyg.smecli.CliCommands.CommandStruct;
-import mikejyg.smecli.CliCommands.InvokeCommandFailed;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
@@ -13,22 +11,16 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  * @author jgu
  *
  */
-public class CommandExecutorBase implements CommandExecutorIntf {
-	
-	private CliCommands cliCommands;
-	
-	// working variables
+public class CommandExecutorBase extends CliCommands {
 	
 	/**
-	 * last result of a non-flow control command.
+	 * a list of command executors to consult, before cliCommands.
 	 */
-	private CmdReturnType lastCmdExecResult;
+	private List<CommandExecutorIntf> commandExecutorList = new ArrayList<>();
 	
 	////////////////////////////////////////////////////////////////
 	
 	public CommandExecutorBase() {
-		cliCommands = new CliCommands();
-		lastCmdExecResult = new CmdReturnType(ReturnCode.OK);
 	}
 	
 	/**
@@ -36,30 +28,36 @@ public class CommandExecutorBase implements CommandExecutorIntf {
 	 */
 	@Override
 	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed  {
-		CommandStruct cmdStruct = cliCommands.getCommand(cmdCall.getCommandName());
-		
-		if (cmdStruct==null) {
-			lastCmdExecResult = new CmdReturnType(ReturnCode.INVALID_COMMAND);
-			return lastCmdExecResult;
+		for (CommandExecutorIntf ce : commandExecutorList) {
+			try {
+				CmdReturnType cmdReturn = ce.execCmd(cmdCall);
+				if (cmdReturn.getReturnCode()==ReturnCode.INVALID_COMMAND)
+					continue;
+				return cmdReturn;
+				
+			} catch (InvokeCommandFailed e) {
+				;
+			}
 		}
 		
-		CmdReturnType cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
-		
-		if ( cmdReturn.getReturnCode().isCmdExecResult() )
-			lastCmdExecResult = cmdReturn;
-		
-		return cmdReturn;
+		return super.execCmd(cmdCall);
 	}
 	
 	@Override
 	public String toHelpString() {
 		String helpStr="";
-		for (CommandStruct cmd : getCommandList()) {
+		for (CommandExecutorIntf ce : commandExecutorList) {
 			if (helpStr.isEmpty())
-				helpStr = cmd.toString();
+				helpStr = ce.toHelpString();
 			else
-				helpStr = helpStr + '\n' + cmd.toString();
+				helpStr = helpStr + '\n' + ce.toHelpString();
 		}
+		
+		if (helpStr.isEmpty())
+			helpStr = super.toHelpString();
+		else
+			helpStr = helpStr + '\n' + super.toHelpString();
+		
 		return helpStr;
 	}
 	
@@ -75,21 +73,17 @@ public class CommandExecutorBase implements CommandExecutorIntf {
 		return execCmd(cmdCall);
 	}
 	
-	public CmdReturnType getLastCmdExecResult() {
-		return lastCmdExecResult;
+	/**
+	 * this single access method allows user to insert executors at desired list positions. 
+	 */
+	public List<CommandExecutorIntf> getCommandExecutorList() {
+		return commandExecutorList;
 	}
 
-	public List<CommandStruct> getCommandList() {
-		return cliCommands.getCommands();
-	}
-
-	public void addMethods(Object cmdObj) {
-		CliAnnotation.addMethods(cliCommands, cmdObj);
-	}
-	
-	public void addCommand(String commandName, String shorthands[], String helpString, Function<CmdCallType, CmdReturnType> cmdFunc) {
-		cliCommands.addCommand(commandName, shorthands, helpString, cmdFunc);
+	public void addObjectMethods(Object cmdObj) {
+		CliAnnotation.addMethods(this, cmdObj);
 	}
 	
 	
 }
+

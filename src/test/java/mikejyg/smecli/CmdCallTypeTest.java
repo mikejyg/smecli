@@ -19,8 +19,8 @@ public class CmdCallTypeTest {
 		CmdCallType c2 = new CmdCallType(ByteBuffer.wrap(cmdCallBytes));
 		
 		if ( ! cmdCallType.equals(c2) ) {
-			System.out.println(c2.toString());
-			System.out.println("vs expected: " + cmdCallType.toString());
+			System.out.print(c2.toString()+'\n');
+			System.out.print("vs expected: " + cmdCallType.toString()+'\n');
 			assert(false);
 		}
 	}

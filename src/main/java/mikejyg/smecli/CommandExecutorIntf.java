@@ -1,8 +1,15 @@
 package mikejyg.smecli;
 
-import mikejyg.smecli.CliCommands.InvokeCommandFailed;
-
 public interface CommandExecutorIntf {
+
+	/**
+	 * Command not found, or the associated method can not be invoked.
+	 * @author jgu
+	 *
+	 */
+	static public class InvokeCommandFailed extends Exception {
+		private static final long serialVersionUID = 1L;
+	}
 	
 	/**
 	 * execute a command call, and return the result.

@@ -12,3 +12,7 @@ Simple modular extendable console interface
 4. Efficiency over doing it all.
 
 5. Not restricting in any way, users of this to write their own code.  
+
+## Dependencies
+
+1. The testing code uses mikejyg/cloep (https://github.com/mikejyg/cloep) project for command line options parsing. The cloep directory needs to be in the same dir as smecli.

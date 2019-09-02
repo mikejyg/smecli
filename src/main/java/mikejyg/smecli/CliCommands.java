@@ -6,17 +6,15 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
 
+import mikejyg.smecli.CmdReturnType.ReturnCode;
+
 /**
- * this holds commands.
+ * This class holds a set of commands, and executes them as requested.
  * 
  * @author jgu
  *
  */
-public class CliCommands {
-	static public class InvokeCommandFailed extends Exception {
-		private static final long serialVersionUID = 1L;
-	}
-	
+public class CliCommands implements CommandExecutorIntf {
 	static class CommandStruct {
 		String commandName;
 		String [] shorthands;
@@ -52,6 +50,11 @@ public class CliCommands {
 		commandStruct.helpString = helpString;
 		commandStruct.cmdFunc = cmdFunc;
 		
+		CommandStruct existingCs = cmdMap.get(commandStruct.commandName);
+		if (existingCs!=null) {
+			commands.remove(existingCs);
+		}
+		
 		commands.add(commandStruct);
 		cmdMap.put(commandStruct.commandName, commandStruct);
 		
@@ -67,6 +70,39 @@ public class CliCommands {
 	}
 	
 	/**
+	 * @throws InvokeCommandFailed
+	 */
+	@Override
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed  {
+		CmdReturnType cmdReturn;
+		
+		CommandStruct cmdStruct = getCommand(cmdCall.getCommandName());
+		
+		if (cmdStruct==null) {
+			return new CmdReturnType(ReturnCode.INVALID_COMMAND);
+		}
+		
+		cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
+		return cmdReturn;
+	}
+	
+	@Override
+	public String toHelpString() {
+		String helpStr="";
+		for (CommandStruct cmd : getCommands()) {
+			if (helpStr.isEmpty())
+				helpStr = cmd.toString();
+			else
+				helpStr = helpStr + '\n' + cmd.toString();
+		}
+		return helpStr;
+	}
+	
+	public void addMethods(Object cmdObj) {
+		CliAnnotation.addMethods(this, cmdObj);
+	}
+	
+	/**
 	 * return the list of available commands.
 	 * @return
 	 */
@@ -78,4 +114,5 @@ public class CliCommands {
 		return commands.isEmpty();
 	}
 
+	
 }
