@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import mikejyg.cloep.ArgsParser;
 import mikejyg.cloep.ArgsParser.ParseException;
-import mikejyg.smecli.CommandExecutorIntf.InvokeCommandFailed;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 
@@ -130,7 +129,7 @@ public class CliRemoteTest {
 	}
 	
 	@Test
-	public void test() throws InterruptedException, IOException, IllegalInputCharException, UnexpectedEofException, InvokeCommandFailed {
+	public void test() throws Exception {
 		int[] cmdCnt= {0};
 		
 		// create a command execution server
@@ -142,7 +141,7 @@ public class CliRemoteTest {
 			}
 			
 			@Override
-			public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed {
+			public CmdReturnType execCmd(CmdCallType cmdCall) {
 				System.out.print("received cmdCall: " + cmdCall.toString() + '\n');
 				cmdCnt[0]++;
 				
@@ -175,14 +174,9 @@ public class CliRemoteTest {
 
 	/**
 	 * execute according to the test options.
-	 * @throws UnexpectedEofException 
-	 * @throws IllegalInputCharException 
-	 * @throws IOException 
-	 * @throws InterruptedException 
-	 * @throws InvokeCommandFailed 
+	 * @throws Exception 
 	 */
-	public void execute() throws InterruptedException, IOException, IllegalInputCharException
-		, UnexpectedEofException, InvokeCommandFailed {
+	public void execute() throws Exception {
 		if (interactiveFlag) {
 			runInteractive();
 			
@@ -207,8 +201,7 @@ public class CliRemoteTest {
 		}
 	}
 	
-	public static void main(String[] args) throws InterruptedException, IOException, IllegalInputCharException, UnexpectedEofException
-		, ParseException, InvokeCommandFailed {
+	public static void main(String[] args) throws Exception {
 		CliRemoteTest cliRemoteTest = new CliRemoteTest();
 		cliRemoteTest.parseCli(args);
 		cliRemoteTest.execute();

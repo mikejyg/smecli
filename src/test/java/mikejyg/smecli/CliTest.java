@@ -16,7 +16,6 @@ import org.junit.Test;
 
 import mikejyg.cloep.ArgsParser;
 import mikejyg.cloep.ArgsParser.ParseException;
-import mikejyg.smecli.CommandExecutorIntf.InvokeCommandFailed;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
@@ -107,7 +106,7 @@ public class CliTest {
 		argsParser.parse(args);
 	}
 	
-	public void execute() throws IOException, UnexpectedEofException, IllegalInputCharException, InvokeCommandFailed {
+	public void execute() throws Exception {
 		CommandExecutorWithSource commandExecutor = new CommandExecutorWithSource();
 		SessionCommon sessionCommon = new SessionCommon(commandExecutor);
 		ConsoleSession consoleSession = new ConsoleSession(sessionCommon);
@@ -157,7 +156,7 @@ public class CliTest {
 	
 	//////////////////////////////////////////////////////////////////////////
 
-	public static void main(String[] args) throws IOException, IllegalInputCharException, UnexpectedEofException, InvokeCommandFailed, ParseException {
+	public static void main(String[] args) throws Exception {
 		CliTest cliTest = new CliTest();
 		cliTest.parseArgs(args);
 		cliTest.execute();

@@ -42,7 +42,8 @@ public class ConsoleSessionCommon {
 	protected void processResults(CmdReturnType cmdReturn) {
 		getPrintWriter().print(cmdReturn.getReturnCode().name() + '\n');
 		
-		if ( ! cmdReturn.getResult().isEmpty() ) {
+		String result = cmdReturn.getResult();
+		if ( result!=null && ! result.isEmpty() ) {
 			getPrintWriter().print(cmdReturn.getResult() + '\n');
 			setPrompted(false);
 		}

@@ -5,11 +5,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
-import mikejyg.smecli.CliPacketSerdes;
 import mikejyg.socket.ByteBufferAccumulator;
 import mikejyg.socket.LvPacket;
 import mikejyg.socket.PacketSocket;
-import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
  * A command executor, that executes commands remotely.
@@ -28,34 +26,18 @@ public class RemoteCommandExecutor implements CommandExecutorIntf {
 	//////////////////////////////////////////////////////////
 	
 	@Override
-	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed {
-		try {
-			ByteBufferAccumulator bba = new ByteBufferAccumulator();
-			CliPacketSerdes.serialize(bba, cmdCall);
-			packetSocket.send(LvPacket.wrap(bba.toBytes()));
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new Error(e.getMessage());
-		}
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws Exception {
+		ByteBufferAccumulator bba = new ByteBufferAccumulator();
+		CliPacketSerdes.serialize(bba, cmdCall);
+		packetSocket.send(LvPacket.wrap(bba.toBytes()));
 
 		LvPacket lvPacket;
-		try {
-			lvPacket = packetSocket.receive();
-		} catch (IOException | LvPacket.ReadException e) {
-			e.printStackTrace();
-			throw new Error(e.getMessage());
-		}
-		
+		lvPacket = packetSocket.receive();
+				
 		CmdReturnType cmdReturn;
-		try {
-			Object obj = cliPacketSerdes.deserialize( ByteBuffer.wrap(lvPacket.getData()) );
-			cmdReturn = (CmdReturnType) obj;
+		Object obj = cliPacketSerdes.deserialize( ByteBuffer.wrap(lvPacket.getData()) );
+		cmdReturn = (CmdReturnType) obj;
 			
-		} catch (ReturnCode.IllegalValueException | CliPacketSerdes.DesException e) {
-			e.printStackTrace();
-			throw new Error(e.getMessage());
-		}
-
 //		System.out.println("received return: " + cmdReturn.toString());
 		
 		return cmdReturn;
@@ -68,9 +50,9 @@ public class RemoteCommandExecutor implements CommandExecutorIntf {
 		CmdReturnType cmdReturn;
 		try {
 			cmdReturn = execCmd(new CmdCallType("help"));
-		} catch (InvokeCommandFailed e) {
+		} catch (Exception e) {
 			e.printStackTrace();
-			throw new Error(e.getMessage());
+			return "";
 		}
 		if ( ! cmdReturn.getReturnCode().isOk() )
 			return "remote help failed: " + cmdReturn.toString();

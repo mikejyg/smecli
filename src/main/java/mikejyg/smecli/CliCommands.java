@@ -73,7 +73,7 @@ public class CliCommands implements CommandExecutorIntf {
 	 * @throws InvokeCommandFailed
 	 */
 	@Override
-	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed  {
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws Exception  {
 		CmdReturnType cmdReturn;
 		
 		CommandStruct cmdStruct = getCommand(cmdCall.getCommandName());

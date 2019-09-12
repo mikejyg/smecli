@@ -76,11 +76,8 @@ public class SessionBase extends CliCommands implements SessionIntf {
 		cliLineReader = new CliLineReader(reader);
 	}
 	
-	/**
-	 * @throws InvokeCommandFailed
-	 */
 	@Override
-	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed {
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws Exception {
 		// do built-in command first...
 		CmdReturnType cmdReturn = super.execCmd(cmdCall);
 		
@@ -108,9 +105,8 @@ public class SessionBase extends CliCommands implements SessionIntf {
 	
 	/** 
 	 * @param cmdLine
-	 * @throws InvokeCommandFailed 
 	 */
-	protected CmdReturnType execCmd(String cmdLine) throws InvokeCommandFailed {
+	protected CmdReturnType execCmd(String cmdLine) throws Exception {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(cmdLine);
 		if (cmdCall.isEmpty())
 			return new CmdReturnType(ReturnCode.NOP);			// no command was executed
@@ -190,8 +186,9 @@ public class SessionBase extends CliCommands implements SessionIntf {
 			CmdReturnType cmdReturn;
 			try {
 				cmdReturn = execCmd(cmdLine);
-			} catch (InvokeCommandFailed e) {
-				throw new RuntimeException("failed to invoke: " + cmdLine);
+				
+			} catch (Exception e) {
+				cmdReturn=new CmdReturnType(ReturnCode.FAILURE, e.getMessage());
 			}
 
 			if (sessionCommonRef.getSessionTranscriptor()!=null) {

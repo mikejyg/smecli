@@ -7,13 +7,12 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
-import mikejyg.smecli.CommandExecutorIntf.InvokeCommandFailed;
 import mikejyg.smecli.CliPacketSerdes.DesException;
 import mikejyg.smecli.CliPacketSerdes.Id;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 import mikejyg.socket.ByteBufferAccumulator;
-import mikejyg.socket.PacketSocket;
 import mikejyg.socket.LvPacket;
+import mikejyg.socket.PacketSocket;
 
 /**
  * This class presents a command executor interface via a stream socket server,
@@ -40,7 +39,7 @@ public class SocketCli {
 		this.port=port;
 	}
 	
-	private void serve(Socket socket) throws IOException, LvPacket.ReadException, InvokeCommandFailed
+	private void serve(Socket socket) throws IOException, LvPacket.ReadException
 		, DesException, ReturnCode.IllegalValueException {
 		PacketSocket packetSocket = new PacketSocket(socket);
 		CliPacketSerdes cliPacketSerdes = new CliPacketSerdes();
@@ -64,7 +63,12 @@ public class SocketCli {
 				cmdReturn = new CmdReturnType(ReturnCode.OK, commandExecutor.toHelpString());
 				
 			} else {
-				cmdReturn = commandExecutor.execCmd(cmdCall);
+				try {
+					cmdReturn = commandExecutor.execCmd(cmdCall);
+				} catch (Exception e) {
+					e.printStackTrace();
+					cmdReturn = new CmdReturnType(ReturnCode.FAILURE, e.getMessage());
+				}
 			}
 
 			ByteBufferAccumulator bba = new ByteBufferAccumulator();

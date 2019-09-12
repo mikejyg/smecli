@@ -23,21 +23,13 @@ public class CommandExecutorBase extends CliCommands {
 	public CommandExecutorBase() {
 	}
 	
-	/**
-	 * @throws InvokeCommandFailed
-	 */
 	@Override
-	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed  {
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws Exception  {
 		for (CommandExecutorIntf ce : commandExecutorList) {
-			try {
-				CmdReturnType cmdReturn = ce.execCmd(cmdCall);
-				if (cmdReturn.getReturnCode()==ReturnCode.INVALID_COMMAND)
-					continue;
-				return cmdReturn;
-				
-			} catch (InvokeCommandFailed e) {
-				;
-			}
+			CmdReturnType cmdReturn = ce.execCmd(cmdCall);
+			if (cmdReturn.getReturnCode()==ReturnCode.INVALID_COMMAND)
+				continue;
+			return cmdReturn;
 		}
 		
 		return super.execCmd(cmdCall);
@@ -63,9 +55,9 @@ public class CommandExecutorBase extends CliCommands {
 	
 	/** 
 	 * @param
-	 * @throws InvokeCommandFailed 
+	 * @throws Exception 
 	 */
-	public CmdReturnType execCmd(String args[]) throws InvokeCommandFailed {
+	public CmdReturnType execCmd(String args[]) throws Exception {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
 		if (cmdCall.isEmpty())
 			return new CmdReturnType(ReturnCode.NOP);	// no command was executed

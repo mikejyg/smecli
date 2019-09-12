@@ -24,7 +24,7 @@ public class CommandExecutor extends CommandExecutorBase {
 	}
 	
 	@Override
-	public CmdReturnType execCmd(CmdCallType cmdCall) throws InvokeCommandFailed  {
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws Exception  {
 		CmdReturnType cmdReturn = super.execCmd(cmdCall);
 		
 		if ( cmdReturn.getReturnCode().isCmdExecResult() )
