@@ -203,7 +203,9 @@ public class SessionBase extends CliCommands implements SessionIntf {
 			}
 			
 			if (cmdReturn.getReturnCode()==ReturnCode.SCRIPT_ERROR_EXIT) {	// cascade exit
-				return cmdReturn;				// return SCRIPT_ERROR_EXIT
+				if (!continueOnError)
+					return cmdReturn;				// return SCRIPT_ERROR_EXIT
+				// otherwise, do nothing.
 				
 			} else if (cmdReturn.getReturnCode()==ReturnCode.EXIT) {
 				break;
