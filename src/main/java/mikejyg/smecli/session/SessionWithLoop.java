@@ -1,4 +1,4 @@
-package mikejyg.smecli;
+package mikejyg.smecli.session;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -7,7 +7,11 @@ import java.util.Stack;
 
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+import mikejyg.smecli.CliUtils;
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.CommandExecutorIntf;
 
 /**
  * A session with basic and loop commands.

@@ -4,9 +4,10 @@ import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
-import mikejyg.smecli.CliPacketSerdes.DesException;
-import mikejyg.smecli.CliPacketSerdes.Id;
 import mikejyg.smecli.CmdReturnType.ReturnCode.IllegalValueException;
+import mikejyg.smecli.socket.CliPacketSerdes;
+import mikejyg.smecli.socket.CliPacketSerdes.DesException;
+import mikejyg.smecli.socket.CliPacketSerdes.Id;
 import mikejyg.socket.ByteBufferAccumulator;
 
 public class CliSerdesTest {

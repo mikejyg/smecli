@@ -2,6 +2,9 @@ package mikejyg.smecli;
 
 import java.util.function.Supplier;
 
+import mikejyg.smecli.session.SessionIntf;
+import mikejyg.smecli.session.SourceCommand;
+
 /**
  * A command executor with source command.
  * 

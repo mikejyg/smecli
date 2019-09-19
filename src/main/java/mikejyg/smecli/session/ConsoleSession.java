@@ -1,4 +1,4 @@
-package mikejyg.smecli;
+package mikejyg.smecli.session;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,7 +8,11 @@ import java.io.Reader;
 import mikejyg.smecli.CliAnnotation.CliCommand;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+import mikejyg.smecli.CliUtils;
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.CommandExecutorIntf;
 
 /**
  * A session that has console interactions.
@@ -17,7 +21,7 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  *
  */
 public class ConsoleSession implements SessionIntf {
-	private SessionBase session;
+	private SessionBase sessionBase;
 	
 	private ConsoleSessionCommon consoleSessionCommonRef;
 	
@@ -34,7 +38,7 @@ public class ConsoleSession implements SessionIntf {
 	/////////////////////////////////////////////////////
 	
 	public ConsoleSession(SessionBase session) {
-		this.session = session;
+		this.sessionBase = session;
 		session.setContinueOnError(true);	// the first console session is the root console session.
 		
 		consoleSessionCommonRef = new ConsoleSessionCommon(session.getSessionCommonRef());
@@ -67,8 +71,8 @@ public class ConsoleSession implements SessionIntf {
 	 * @param parentSession
 	 */
 	public ConsoleSession(ConsoleSession parentSession) {
-		session = parentSession.session.newSession();
-		session.setContinueOnError(false);
+		sessionBase = parentSession.sessionBase.newSession();
+		sessionBase.setContinueOnError(false);
 		
 		// copy settings
 		this.consoleSessionCommonRef = parentSession.consoleSessionCommonRef;
@@ -90,7 +94,7 @@ public class ConsoleSession implements SessionIntf {
 	}
 	
 	private void initCmdLineListener() {
-		session.setCmdLineListener( (l)->{
+		sessionBase.setCmdLineListener( (l)->{
 			if (interactiveFlag)
 				consoleSessionCommonRef.setPrompted(false);
 			
@@ -108,17 +112,17 @@ public class ConsoleSession implements SessionIntf {
 		SourceCommand sourceCommandExecutor = new SourceCommand( ()->{
 			return newSession();
 		});
-		session.addMethods(sourceCommandExecutor);
+		sessionBase.addMethods(sourceCommandExecutor);
 	}
 	
 	@Override
 	public void setReader(Reader reader) {
-		session.setReader(reader);
+		sessionBase.setReader(reader);
 	}
 	
 	@Override
 	public CmdReturnType execAll() throws IOException, UnexpectedEofException, IllegalInputCharException {
-		return session.execAll();
+		return sessionBase.execAll();
 	}
 	
 	@CliCommand(helpString = "With an argument, set local echo to on or off, or without argument, show current local echo state.")
@@ -180,7 +184,11 @@ public class ConsoleSession implements SessionIntf {
 	}
 	
 	public void setContinueOnError(boolean continueOnError) {
-		session.setContinueOnError(continueOnError);
+		sessionBase.setContinueOnError(continueOnError);
+	}
+
+	public SessionBase getSessionBase() {
+		return sessionBase;
 	}
 
 	/**

@@ -1,6 +1,8 @@
-package mikejyg.smecli;
+package mikejyg.smecli.session;
 
 import java.io.PrintWriter;
+
+import mikejyg.smecli.CmdReturnType;
 
 /**
  * This class holds the settings and variables common to all console sessions,

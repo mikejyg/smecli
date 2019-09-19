@@ -19,6 +19,12 @@ import mikejyg.cloep.ArgsParser.ParseException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.commands.SystemCommand;
+import mikejyg.smecli.session.ConsoleSession;
+import mikejyg.smecli.session.SessionBase;
+import mikejyg.smecli.session.SessionCommon;
+import mikejyg.smecli.session.SessionTranscriptor;
+import mikejyg.smecli.session.SessionWithLoop;
 
 public class CliTest {
 
@@ -112,6 +118,9 @@ public class CliTest {
 		ConsoleSession consoleSession = new ConsoleSession(sessionCommon);
 	
 		commandExecutor.setNewCliSessionFunc(()->{return consoleSession;});
+	
+		consoleSession.getSessionBase().addMethods(
+				new SystemCommand(consoleSession.getConsoleSessionCommonRef().getPrintWriter()) );
 		
 		PrintWriter writer=null;
 		if ( transcriptFilename != null ) {

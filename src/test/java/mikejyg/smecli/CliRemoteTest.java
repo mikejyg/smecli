@@ -9,6 +9,12 @@ import mikejyg.cloep.ArgsParser;
 import mikejyg.cloep.ArgsParser.ParseException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+import mikejyg.smecli.session.ConsoleSession;
+import mikejyg.smecli.session.SessionBase;
+import mikejyg.smecli.session.SessionCommon;
+import mikejyg.smecli.session.SessionWithLoop;
+import mikejyg.smecli.socket.RemoteCommandExecutor;
+import mikejyg.smecli.socket.SocketCli;
 
 /**
  * @author mikejyg

@@ -1,10 +1,13 @@
-package mikejyg.smecli;
+package mikejyg.smecli.socket;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
+import mikejyg.smecli.CommandExecutorIntf;
 import mikejyg.socket.ByteBufferAccumulator;
 import mikejyg.socket.LvPacket;
 import mikejyg.socket.PacketSocket;

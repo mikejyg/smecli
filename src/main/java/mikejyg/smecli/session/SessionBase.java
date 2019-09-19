@@ -1,9 +1,14 @@
-package mikejyg.smecli;
+package mikejyg.smecli.session;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.function.Consumer;
 
+import mikejyg.smecli.CliCommands;
+import mikejyg.smecli.CliLineReader;
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
+import mikejyg.smecli.CommandExecutorIntf;
 import mikejyg.smecli.CliLineReader.EofException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;

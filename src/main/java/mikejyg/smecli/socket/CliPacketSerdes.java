@@ -1,8 +1,10 @@
-package mikejyg.smecli;
+package mikejyg.smecli.socket;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 import mikejyg.socket.ByteBufferAccumulator;
 

@@ -1,4 +1,4 @@
-package mikejyg.smecli;
+package mikejyg.smecli.socket;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -7,9 +7,12 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
-import mikejyg.smecli.CliPacketSerdes.DesException;
-import mikejyg.smecli.CliPacketSerdes.Id;
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.CommandExecutorIntf;
+import mikejyg.smecli.socket.CliPacketSerdes.DesException;
+import mikejyg.smecli.socket.CliPacketSerdes.Id;
 import mikejyg.socket.ByteBufferAccumulator;
 import mikejyg.socket.LvPacket;
 import mikejyg.socket.PacketSocket;

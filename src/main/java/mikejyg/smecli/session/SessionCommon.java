@@ -1,7 +1,9 @@
-package mikejyg.smecli;
+package mikejyg.smecli.session;
 
 import java.util.function.Consumer;
 
+import mikejyg.smecli.CmdReturnType;
+import mikejyg.smecli.CommandExecutorIntf;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**

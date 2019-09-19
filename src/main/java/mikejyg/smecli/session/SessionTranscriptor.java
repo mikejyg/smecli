@@ -1,6 +1,8 @@
-package mikejyg.smecli;
+package mikejyg.smecli.session;
 
 import java.io.PrintWriter;
+
+import mikejyg.smecli.CmdReturnType;
 
 /**
  * writes commands and results to a writer.

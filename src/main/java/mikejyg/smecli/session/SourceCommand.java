@@ -1,4 +1,4 @@
-package mikejyg.smecli;
+package mikejyg.smecli.session;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -11,6 +11,9 @@ import java.util.function.Supplier;
 import mikejyg.smecli.CliAnnotation.CliCommand;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+import mikejyg.smecli.CliUtils;
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**

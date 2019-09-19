@@ -1,6 +1,10 @@
-package mikejyg.smecli;
+package mikejyg.smecli.session;
 
+import mikejyg.smecli.AssertCommand;
 import mikejyg.smecli.CliAnnotation.CliCommand;
+import mikejyg.smecli.CliUtils;
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**

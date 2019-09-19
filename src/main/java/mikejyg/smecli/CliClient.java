@@ -4,6 +4,11 @@ import java.io.IOException;
 
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+import mikejyg.smecli.session.ConsoleSession;
+import mikejyg.smecli.session.SessionBase;
+import mikejyg.smecli.session.SessionCommon;
+import mikejyg.smecli.session.SessionWithLoop;
+import mikejyg.smecli.socket.RemoteCommandExecutor;
 
 /**
  * a CliAdapter class that connects to a remote command executor server, using a RemoteCommandExecutor. 
