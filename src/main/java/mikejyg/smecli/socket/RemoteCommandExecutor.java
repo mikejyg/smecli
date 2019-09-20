@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
-import mikejyg.smecli.CommandExecutorIntf;
+import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 import mikejyg.socket.ByteBufferAccumulator;
 import mikejyg.socket.LvPacket;
 import mikejyg.socket.PacketSocket;

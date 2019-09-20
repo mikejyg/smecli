@@ -1,17 +1,21 @@
-package mikejyg.smecli;
+package mikejyg.smecli.cmdexecutor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
- * A CommandExecutor manages and executes commands.
+ * A CommandExecutor that uses a list of command executors.
+ * 
+ * NOTE: all command executors should share a same environment.
  * 
  * @author jgu
  *
  */
-public class CommandExecutorBase extends CliCommands {
+public class AggregateCommandExecutor implements CommandExecutorIntf {
 	
 	/**
 	 * a list of command executors to consult, before cliCommands.
@@ -20,7 +24,7 @@ public class CommandExecutorBase extends CliCommands {
 	
 	////////////////////////////////////////////////////////////////
 	
-	public CommandExecutorBase() {
+	public AggregateCommandExecutor() {
 	}
 	
 	@Override
@@ -32,7 +36,7 @@ public class CommandExecutorBase extends CliCommands {
 			return cmdReturn;
 		}
 		
-		return super.execCmd(cmdCall);
+		return new CmdReturnType(ReturnCode.INVALID_COMMAND);
 	}
 	
 	@Override
@@ -45,24 +49,7 @@ public class CommandExecutorBase extends CliCommands {
 				helpStr = helpStr + '\n' + ce.toHelpString();
 		}
 		
-		if (helpStr.isEmpty())
-			helpStr = super.toHelpString();
-		else
-			helpStr = helpStr + '\n' + super.toHelpString();
-		
 		return helpStr;
-	}
-	
-	/** 
-	 * @param
-	 * @throws Exception 
-	 */
-	public CmdReturnType execCmd(String args[]) throws Exception {
-		CmdCallType cmdCall = CmdCallType.toCmdCall(args);
-		if (cmdCall.isEmpty())
-			return new CmdReturnType(ReturnCode.NOP);	// no command was executed
-		
-		return execCmd(cmdCall);
 	}
 	
 	/**
@@ -72,10 +59,6 @@ public class CommandExecutorBase extends CliCommands {
 		return commandExecutorList;
 	}
 
-	public void addObjectMethods(Object cmdObj) {
-		CliAnnotation.addMethods(this, cmdObj);
-	}
-	
 	
 }
 

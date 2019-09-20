@@ -5,6 +5,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
+
 /**
  * to provide a way of adding commands to a CLI through annotation.
  *  
@@ -25,7 +27,7 @@ public class CliAnnotation {
 		String helpString() default "";
 	}
 	
-	public static void addMethods(CliCommands cliCommands, Object cmdObj) {
+	public static void addMethods(CommandsCommandExecutor cliCommands, Object cmdObj) {
 		Method [] methods = cmdObj.getClass().getMethods();
 		
 		for (Method method : methods) {

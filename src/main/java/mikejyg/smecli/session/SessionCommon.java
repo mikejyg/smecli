@@ -3,8 +3,8 @@ package mikejyg.smecli.session;
 import java.util.function.Consumer;
 
 import mikejyg.smecli.CmdReturnType;
-import mikejyg.smecli.CommandExecutorIntf;
-import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.Environment;
+import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 
 /**
  * this class holds the settings and variables common to all sessions.
@@ -15,10 +15,10 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
 public class SessionCommon {
 	private CommandExecutorIntf commandExecutorRef;
 	
+	private Environment environment = new Environment();
+	
 	private boolean endFlag=false;	// exit all (nested) sessions.
 	
-	private CmdReturnType lastCmdExecResult = new CmdReturnType(ReturnCode.OK);
-
 	private Runnable promptFunc=null;
 	
 	private Consumer<CmdReturnType> cmdReturnListener=null;
@@ -39,14 +39,6 @@ public class SessionCommon {
 
 	public void setCommandExecutorRef(CommandExecutorIntf commandExecutorRef) {
 		this.commandExecutorRef = commandExecutorRef;
-	}
-
-	public CmdReturnType getLastCmdExecResult() {
-		return lastCmdExecResult;
-	}
-
-	public void setLastCmdExecResult(CmdReturnType lastCmdExecResult) {
-		this.lastCmdExecResult = lastCmdExecResult;
 	}
 
 	public boolean isEndFlag() {
@@ -79,6 +71,10 @@ public class SessionCommon {
 
 	public void setCmdReturnListener(Consumer<CmdReturnType> cmdReturnListener) {
 		this.cmdReturnListener = cmdReturnListener;
+	}
+
+	public Environment getEnvironment() {
+		return environment;
 	}
 
 

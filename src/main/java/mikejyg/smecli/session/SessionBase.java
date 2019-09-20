@@ -4,15 +4,15 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.function.Consumer;
 
-import mikejyg.smecli.CliCommands;
 import mikejyg.smecli.CliLineReader;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
-import mikejyg.smecli.CommandExecutorIntf;
 import mikejyg.smecli.CliLineReader.EofException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
+import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 
 /**
  * This class provides the basic mechanisms for a CLI session.
@@ -34,7 +34,7 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  * @author mikejyg
  *
  */
-public class SessionBase extends CliCommands implements SessionIntf {
+public class SessionBase extends CommandsCommandExecutor implements SessionIntf {
 	/**
 	 * a reference to a SessionCommon.
 	 */
@@ -91,7 +91,7 @@ public class SessionBase extends CliCommands implements SessionIntf {
 		}
 		
 		if ( cmdReturn.getReturnCode().isCmdExecResult() )
-			setLastCmdExecResult(cmdReturn);
+			setLastCmdReturn(cmdReturn);
 			
 		return cmdReturn;
 	}
@@ -234,12 +234,12 @@ public class SessionBase extends CliCommands implements SessionIntf {
 		return cliLineReader;
 	}
 
-	protected CmdReturnType getLastCmdExecResult() {
-		return sessionCommonRef.getLastCmdExecResult();
+	protected CmdReturnType getLastCmdReturn() {
+		return sessionCommonRef.getEnvironment().getLastCmdReturn();
 	}
 
-	public void setLastCmdExecResult(CmdReturnType lastCmdExecResult) {
-		sessionCommonRef.setLastCmdExecResult(lastCmdExecResult);
+	public void setLastCmdReturn(CmdReturnType lastCmdReturn) {
+		sessionCommonRef.getEnvironment().setLastCmdReturn(lastCmdReturn);
 	}
 
 	public boolean isContinueOnError() {

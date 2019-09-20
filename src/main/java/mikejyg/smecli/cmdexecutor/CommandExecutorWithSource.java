@@ -1,7 +1,9 @@
-package mikejyg.smecli;
+package mikejyg.smecli.cmdexecutor;
 
 import java.util.function.Supplier;
 
+import mikejyg.smecli.CliAnnotation;
+import mikejyg.smecli.Environment;
 import mikejyg.smecli.session.SessionIntf;
 import mikejyg.smecli.session.SourceCommand;
 
@@ -15,9 +17,13 @@ public class CommandExecutorWithSource extends CommandExecutor {
 	
 	private SourceCommand sourceCommand;
 	
+	public CommandExecutorWithSource(Environment environmentRef) {
+		super(environmentRef);
+	}
+	
 	public void setNewCliSessionFunc(Supplier<SessionIntf> newCliSessionFunc) {
 		sourceCommand = new SourceCommand(newCliSessionFunc);
-		addObjectMethods( sourceCommand );
+		CliAnnotation.addMethods(this, sourceCommand);
 	}
 	
 }

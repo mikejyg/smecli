@@ -11,7 +11,7 @@ import mikejyg.smecli.CliUtils;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
-import mikejyg.smecli.CommandExecutorIntf;
+import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 
 /**
  * A session with basic and loop commands.

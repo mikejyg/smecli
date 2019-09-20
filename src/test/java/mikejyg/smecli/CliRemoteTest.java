@@ -9,6 +9,8 @@ import mikejyg.cloep.ArgsParser;
 import mikejyg.cloep.ArgsParser.ParseException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
+import mikejyg.smecli.cmdexecutor.CommandExecutor;
+import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 import mikejyg.smecli.session.ConsoleSession;
 import mikejyg.smecli.session.SessionBase;
 import mikejyg.smecli.session.SessionCommon;
@@ -110,7 +112,7 @@ public class CliRemoteTest {
 	 */
 	public void runInteractive() throws InterruptedException, IOException, IllegalInputCharException, UnexpectedEofException {
 		// create a command execution server
-		SocketCliThread socketCliThread = startServer(new CommandExecutor(), 0);
+		SocketCliThread socketCliThread = startServer(new CommandExecutor(new Environment()), 0);
 
 		// create a client
 		
@@ -190,7 +192,7 @@ public class CliRemoteTest {
 			test();
 			
 		} else if (serverFlag) {	// run a server only
-			SocketCli socketCli = new SocketCli(new CommandExecutor(), serverPort);
+			SocketCli socketCli = new SocketCli(new CommandExecutor(new Environment()), serverPort);
 			socketCli.accept();
 			
 		} else if (clientFlag) {	// run a client only

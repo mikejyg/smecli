@@ -1,26 +1,28 @@
-package mikejyg.smecli;
+package mikejyg.smecli.cmdexecutor;
 
 import mikejyg.smecli.CliAnnotation.CliCommand;
+import mikejyg.smecli.CliUtils;
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.Environment;
+import mikejyg.smecli.commands.AssertCommand;
 
 /**
  * a CommandExecutorBase with some built-in commands
  * @author jgu
  *
  */
-public class CommandExecutor extends CommandExecutorBase {
+public class CommandExecutor extends CommandsCommandExecutor {
 
-	/**
-	 * last result of a non-flow control command.
-	 */
-	private CmdReturnType lastCmdExecResult;
+	private Environment environmentRef;
 	
 	//////////////////////////////////////////////////////
 	
-	public CommandExecutor() {
+	public CommandExecutor(Environment environmentRef) {
+		this.environmentRef = environmentRef;
 		addMethods(this);
 		addCommands();
-		lastCmdExecResult = new CmdReturnType(ReturnCode.OK);
 	}
 	
 	@Override
@@ -28,13 +30,13 @@ public class CommandExecutor extends CommandExecutorBase {
 		CmdReturnType cmdReturn = super.execCmd(cmdCall);
 		
 		if ( cmdReturn.getReturnCode().isCmdExecResult() )
-			lastCmdExecResult = cmdReturn;
+			environmentRef.setLastCmdReturn(cmdReturn);
 		
 		return cmdReturn;
 	}
 	
 	private void addCommands() {
-		AssertCommand.addToCliCommands(this, ()->{ return lastCmdExecResult; });
+		AssertCommand.addToCliCommands(this, ()->{ return environmentRef.getLastCmdReturn(); });
 	}
 	
 	@CliCommand(helpString = "sleep for specified time (seconds in double).")

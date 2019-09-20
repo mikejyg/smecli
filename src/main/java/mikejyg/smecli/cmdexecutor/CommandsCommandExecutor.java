@@ -1,19 +1,24 @@
-package mikejyg.smecli;
+package mikejyg.smecli.cmdexecutor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import mikejyg.smecli.CliAnnotation;
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdFunction;
+import mikejyg.smecli.CmdReturnType;
+import mikejyg.smecli.CommandStruct;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
- * This class holds a set of commands, and executes them as requested.
+ * A command executor that holds a list of commands.
  * 
  * @author jgu
  *
  */
-public class CliCommands implements CommandExecutorIntf {
+public class CommandsCommandExecutor implements CommandExecutorIntf {
 	// command storage & indexes
 	
 	private List<CommandStruct> commands = new ArrayList<>();

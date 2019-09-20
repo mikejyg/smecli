@@ -1,11 +1,11 @@
 package mikejyg.smecli.session;
 
-import mikejyg.smecli.AssertCommand;
 import mikejyg.smecli.CliAnnotation.CliCommand;
 import mikejyg.smecli.CliUtils;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.commands.AssertCommand;
 
 /**
  * This class provides some basic commands for a session.
@@ -48,7 +48,7 @@ public class SessionCommands {
 					return new CmdReturnType(ReturnCode.OK, sessionRef.isContinueOnError() ? "on" : "off");
 				});
 		
-		AssertCommand.addToCliCommands(sessionRef, ()->{return sessionRef.getLastCmdExecResult();});
+		AssertCommand.addToCliCommands(sessionRef, ()->{return sessionRef.getLastCmdReturn();});
 	}		
 	
 	@CliCommand(shorthands = {"?"}, helpString = "print help.")

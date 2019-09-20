@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
-import mikejyg.smecli.CommandExecutorIntf;
+import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 import mikejyg.smecli.socket.CliPacketSerdes.DesException;
 import mikejyg.smecli.socket.CliPacketSerdes.Id;
 import mikejyg.socket.ByteBufferAccumulator;

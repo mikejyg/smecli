@@ -1,8 +1,12 @@
-package mikejyg.smecli;
+package mikejyg.smecli.commands;
 
 import java.util.function.Supplier;
 
+import mikejyg.smecli.CliUtils;
+import mikejyg.smecli.CmdCallType;
+import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
 
 /**
  * This class provides the assert command.
@@ -14,7 +18,7 @@ public class AssertCommand {
 	/**
 	 * @param getLastCmdResultFunc This command need a way to get the last command return.
 	 */
-	public static void addToCliCommands(CliCommands cliCommands, Supplier<CmdReturnType> getLastCmdResultFunc) {
+	public static void addToCliCommands(CommandsCommandExecutor cliCommands, Supplier<CmdReturnType> getLastCmdResultFunc) {
 		cliCommands.addCommand("assert", null, "assert the value of the last result."
 			+ " 1st argument the return code string, 2nd argument(optional) is is the result string."
 			, (CmdCallType cmdCall)->{

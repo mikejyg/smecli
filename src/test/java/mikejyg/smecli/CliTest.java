@@ -19,6 +19,8 @@ import mikejyg.cloep.ArgsParser.ParseException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.cmdexecutor.CommandExecutor;
+import mikejyg.smecli.cmdexecutor.CommandExecutorWithSource;
 import mikejyg.smecli.commands.SystemCommand;
 import mikejyg.smecli.session.ConsoleSession;
 import mikejyg.smecli.session.SessionBase;
@@ -57,7 +59,7 @@ public class CliTest {
 
 	@Test
 	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException {
-		CommandExecutor commandExecutor = new CommandExecutor();
+		CommandExecutor commandExecutor = new CommandExecutor(new Environment());
 		
 		SessionBase session = new SessionWithLoop(commandExecutor);
 		ConsoleSession consoleSession = new ConsoleSession(session);
@@ -113,7 +115,7 @@ public class CliTest {
 	}
 	
 	public void execute() throws Exception {
-		CommandExecutorWithSource commandExecutor = new CommandExecutorWithSource();
+		CommandExecutorWithSource commandExecutor = new CommandExecutorWithSource(new Environment());
 		SessionCommon sessionCommon = new SessionCommon(commandExecutor);
 		ConsoleSession consoleSession = new ConsoleSession(sessionCommon);
 	
