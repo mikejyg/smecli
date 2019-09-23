@@ -1,6 +1,7 @@
 package mikejyg.smecli.cmdexecutor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -10,6 +11,7 @@ import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdFunction;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CommandStruct;
+import mikejyg.smecli.Environment;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
@@ -19,12 +21,16 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  *
  */
 public class CommandsCommandExecutor implements CommandExecutorIntf {
+	private Environment environmentRef = new Environment();
+	
 	// command storage & indexes
 	
 	private List<CommandStruct> commands = new ArrayList<>();
 	
 	private Map<String, CommandStruct> cmdMap = new TreeMap<>();
 
+	////////////////////////////////////////////////////////////////
+	
 	public void addCommand(CommandStruct commandStruct) {
 		CommandStruct existingCs = cmdMap.get(commandStruct.commandName);
 		if (existingCs!=null) {
@@ -59,17 +65,21 @@ public class CommandsCommandExecutor implements CommandExecutorIntf {
 		CommandStruct cmdStruct = getCommand(cmdCall.getCommandName());
 		
 		if (cmdStruct==null) {
-			return new CmdReturnType(ReturnCode.INVALID_COMMAND);
+			cmdReturn = new CmdReturnType(ReturnCode.INVALID_COMMAND);	
+		} else {
+			cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
 		}
 		
-		cmdReturn = cmdStruct.cmdFunc.apply(cmdCall);
+		if ( cmdReturn.getReturnCode().isCmdExecResult() )
+			environmentRef.setLastCmdReturn(cmdReturn);
+		
 		return cmdReturn;
 	}
 	
 	@Override
 	public String toHelpString() {
 		String helpStr="";
-		for (CommandStruct cmd : getCommands()) {
+		for (CommandStruct cmd : commands) {
 			if (helpStr.isEmpty())
 				helpStr = cmd.toString();
 			else
@@ -78,20 +88,22 @@ public class CommandsCommandExecutor implements CommandExecutorIntf {
 		return helpStr;
 	}
 	
-	public void addMethods(Object cmdObj) {
-		CliAnnotation.addMethods(this, cmdObj);
+	public void addCommands(Collection<CommandStruct> commandStructs) {
+		for (CommandStruct commandStruct : commandStructs) {
+			addCommand(commandStruct);
+		}
 	}
 	
-	/**
-	 * return the list of available commands.
-	 * @return
-	 */
-	public List<CommandStruct> getCommands() {
-		return commands;
+	public void addMethods(Object cmdObj) {
+		addCommands(CliAnnotation.getCliCommands(cmdObj));
 	}
-
+	
 	public boolean isEmpty() {
 		return commands.isEmpty();
+	}
+
+	public Environment getEnvironmentRef() {
+		return environmentRef;
 	}
 
 	

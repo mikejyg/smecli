@@ -7,7 +7,8 @@ import java.nio.ByteBuffer;
 
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
-import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
+import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
 import mikejyg.socket.ByteBufferAccumulator;
 import mikejyg.socket.LvPacket;
 import mikejyg.socket.PacketSocket;
@@ -19,7 +20,7 @@ import mikejyg.socket.PacketSocket;
  * @author jgu
  *
  */
-public class RemoteCommandExecutor implements CommandExecutorIntf {
+public class RemoteCommandExecutor extends CommandsCommandExecutor {
 
 	private Socket socket;
 	private PacketSocket packetSocket;
@@ -30,6 +31,12 @@ public class RemoteCommandExecutor implements CommandExecutorIntf {
 	
 	@Override
 	public CmdReturnType execCmd(CmdCallType cmdCall) throws Exception {
+		CmdReturnType cmdReturn;
+		
+		cmdReturn = super.execCmd(cmdCall);
+		if (cmdReturn.getReturnCode()!=ReturnCode.INVALID_COMMAND)
+			return cmdReturn;
+		
 		ByteBufferAccumulator bba = new ByteBufferAccumulator();
 		CliPacketSerdes.serialize(bba, cmdCall);
 		packetSocket.send(LvPacket.wrap(bba.toBytes()));
@@ -37,7 +44,6 @@ public class RemoteCommandExecutor implements CommandExecutorIntf {
 		LvPacket lvPacket;
 		lvPacket = packetSocket.receive();
 				
-		CmdReturnType cmdReturn;
 		Object obj = cliPacketSerdes.deserialize( ByteBuffer.wrap(lvPacket.getData()) );
 		cmdReturn = (CmdReturnType) obj;
 			
@@ -48,19 +54,23 @@ public class RemoteCommandExecutor implements CommandExecutorIntf {
 
 	@Override
 	public String toHelpString() {
-		// TODO: change to OOB messaging for this special case.
+		String helpStr = toHelpString();
 		
+		// TODO: change to OOB messaging for this special case.
 		CmdReturnType cmdReturn;
 		try {
 			cmdReturn = execCmd(new CmdCallType("help"));
 		} catch (Exception e) {
 			e.printStackTrace();
-			return "";
+			return helpStr;
 		}
-		if ( ! cmdReturn.getReturnCode().isOk() )
-			return "remote help failed: " + cmdReturn.toString();
+		if ( ! cmdReturn.getReturnCode().isOk() ) {
+			helpStr += "\nremote help failed: " + cmdReturn.toString();
+		} else {
+			helpStr += '\n' + cmdReturn.getResult(); 
+		}
 		
-		return cmdReturn.getResult();
+		return helpStr;
 	}
 
 	public void connect(String hostname, int port) throws IOException {

@@ -19,12 +19,13 @@ import mikejyg.cloep.ArgsParser.ParseException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
-import mikejyg.smecli.cmdexecutor.CommandExecutor;
-import mikejyg.smecli.cmdexecutor.CommandExecutorWithSource;
+import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
+import mikejyg.smecli.commands.AssertCommand;
+import mikejyg.smecli.commands.BasicCommands;
+import mikejyg.smecli.commands.SourceCommand;
 import mikejyg.smecli.commands.SystemCommand;
 import mikejyg.smecli.session.ConsoleSession;
-import mikejyg.smecli.session.SessionBase;
-import mikejyg.smecli.session.SessionCommon;
+import mikejyg.smecli.session.Session;
 import mikejyg.smecli.session.SessionTranscriptor;
 import mikejyg.smecli.session.SessionWithLoop;
 
@@ -59,10 +60,16 @@ public class CliTest {
 
 	@Test
 	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException {
-		CommandExecutor commandExecutor = new CommandExecutor(new Environment());
+		CommandsCommandExecutor commandExecutor = new CommandsCommandExecutor();
 		
-		SessionBase session = new SessionWithLoop(commandExecutor);
+		commandExecutor.addMethods(new BasicCommands(commandExecutor));
+		commandExecutor.addCommand(AssertCommand.getCommandStruct(
+				() -> { return commandExecutor.getEnvironmentRef().getLastCmdReturn();}) );
+
+		Session session = new SessionWithLoop(commandExecutor);
 		ConsoleSession consoleSession = new ConsoleSession(session);
+		
+		commandExecutor.addMethods( new SourceCommand(()->{return consoleSession;}) );
 		
 		final String outputFilename="cliTest.out";
 		// execute commands from cliTestCommands.txt and write to test.out
@@ -115,11 +122,14 @@ public class CliTest {
 	}
 	
 	public void execute() throws Exception {
-		CommandExecutorWithSource commandExecutor = new CommandExecutorWithSource(new Environment());
-		SessionCommon sessionCommon = new SessionCommon(commandExecutor);
-		ConsoleSession consoleSession = new ConsoleSession(sessionCommon);
+		CommandsCommandExecutor commandExecutor = new CommandsCommandExecutor();
+		commandExecutor.addMethods(new BasicCommands(commandExecutor));
+		commandExecutor.addCommand(AssertCommand.getCommandStruct(
+				() -> { return commandExecutor.getEnvironmentRef().getLastCmdReturn();}) );
+		Session session = new SessionWithLoop(commandExecutor);
+		ConsoleSession consoleSession = new ConsoleSession(session);
 	
-		commandExecutor.setNewCliSessionFunc(()->{return consoleSession;});
+		commandExecutor.addMethods( new SourceCommand(()->{return consoleSession;}) );
 	
 		consoleSession.getSessionBase().addMethods(
 				new SystemCommand(consoleSession.getConsoleSessionCommonRef().getPrintWriter()) );
@@ -129,7 +139,7 @@ public class CliTest {
 			consoleSession.setContinueOnError(false);
 
 			writer = new PrintWriter(transcriptFilename);
-			sessionCommon.setSessionTranscriptor( new SessionTranscriptor(writer) );
+			session.getSessionCommonRef().setSessionTranscriptor( new SessionTranscriptor(writer) );
 		}
 		
 		if (commandStrs!=null) {

@@ -9,12 +9,10 @@ import mikejyg.cloep.ArgsParser;
 import mikejyg.cloep.ArgsParser.ParseException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
-import mikejyg.smecli.cmdexecutor.CommandExecutor;
 import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
+import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
 import mikejyg.smecli.session.ConsoleSession;
-import mikejyg.smecli.session.SessionBase;
-import mikejyg.smecli.session.SessionCommon;
-import mikejyg.smecli.session.SessionWithLoop;
+import mikejyg.smecli.session.Session;
 import mikejyg.smecli.socket.RemoteCommandExecutor;
 import mikejyg.smecli.socket.SocketCli;
 
@@ -112,14 +110,14 @@ public class CliRemoteTest {
 	 */
 	public void runInteractive() throws InterruptedException, IOException, IllegalInputCharException, UnexpectedEofException {
 		// create a command execution server
-		SocketCliThread socketCliThread = startServer(new CommandExecutor(new Environment()), 0);
+		SocketCliThread socketCliThread = startServer(new CommandsCommandExecutor(), 0);
 
 		// create a client
 		
 		RemoteCommandExecutor rce = new RemoteCommandExecutor();
 		rce.connect("localhost", socketCliThread.socketCli.getPort());
 		
-		SessionBase session = new SessionWithLoop(new SessionCommon(rce));
+		Session session = new Session(rce);
 		
 		try (InputStreamReader reader = new InputStreamReader(System.in) ) {
 			ConsoleSession consoleSession = new ConsoleSession(session);
@@ -192,7 +190,7 @@ public class CliRemoteTest {
 			test();
 			
 		} else if (serverFlag) {	// run a server only
-			SocketCli socketCli = new SocketCli(new CommandExecutor(new Environment()), serverPort);
+			SocketCli socketCli = new SocketCli(new CommandsCommandExecutor(), serverPort);
 			socketCli.accept();
 			
 		} else if (clientFlag) {	// run a client only

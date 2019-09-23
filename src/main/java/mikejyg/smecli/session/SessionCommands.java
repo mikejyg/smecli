@@ -1,10 +1,15 @@
 package mikejyg.smecli.session;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import mikejyg.smecli.CliAnnotation.CliCommand;
+import mikejyg.smecli.CliAnnotation;
 import mikejyg.smecli.CliUtils;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.CommandStruct;
 import mikejyg.smecli.commands.AssertCommand;
 
 /**
@@ -16,19 +21,19 @@ import mikejyg.smecli.commands.AssertCommand;
  *
  */
 public class SessionCommands {
-	private SessionBase sessionRef;
+	private Session sessionRef;
 	
 	/////////////////////////////////////////////////
 	
-	public SessionCommands(SessionBase session) {
+	public SessionCommands(Session session) {
 		sessionRef = session;
-		
-		sessionRef.addMethods(this);
-		addCommands();
 	}
 	
-	protected void addCommands() {
-		sessionRef.addCommand("continueOnError", new String[]{"coe"}, "set whether to continue on command execution error."
+	public List<CommandStruct> getCommands() {
+		ArrayList<CommandStruct> cmds = new ArrayList<>();
+		
+		cmds.add( new CommandStruct(
+				"continueOnError", new String[]{"coe"}, "set whether to continue on command execution error."
 				+ " if no argument is given, prints out current state, otherwise use argument on or off."
 				, (CmdCallType cmdCall)->{
 					String arg = CliUtils.getArg0(cmdCall);
@@ -46,9 +51,14 @@ public class SessionCommands {
 					}
 
 					return new CmdReturnType(ReturnCode.OK, sessionRef.isContinueOnError() ? "on" : "off");
-				});
+				}) );
 		
-		AssertCommand.addToCliCommands(sessionRef, ()->{return sessionRef.getLastCmdReturn();});
+		cmds.add( AssertCommand.getCommandStruct(()->{
+			return sessionRef.getLastCmdReturn();}) );
+		
+		cmds.addAll( CliAnnotation.getCliCommands(this) );
+		
+		return cmds;
 	}		
 	
 	@CliCommand(shorthands = {"?"}, helpString = "print help.")

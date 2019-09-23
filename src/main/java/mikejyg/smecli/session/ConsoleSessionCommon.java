@@ -14,7 +14,7 @@ import mikejyg.smecli.CmdReturnType;
 public class ConsoleSessionCommon {
 	
 	// hold a reference to a SessionCommon.
-	private SessionCommon sessionCommonRef;
+	private SessionCommonEnv sessionCommonRef;
 	
 	private String prompt = "> ";
 	
@@ -30,7 +30,7 @@ public class ConsoleSessionCommon {
 	
 	////////////////////////////////////////////////////////////
 	
-	public ConsoleSessionCommon(SessionCommon sessionCommon) {
+	public ConsoleSessionCommon(SessionCommonEnv sessionCommon) {
 		this.sessionCommonRef = sessionCommon;
 		
 		printWriter = new PrintWriter(System.out);
@@ -81,7 +81,7 @@ public class ConsoleSessionCommon {
 		this.prompted = prompted;
 	}
 
-	public SessionCommon getSessionCommonRef() {
+	public SessionCommonEnv getSessionCommonRef() {
 		return sessionCommonRef;
 	}
 

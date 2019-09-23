@@ -34,12 +34,15 @@ import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
  * @author mikejyg
  *
  */
-public class SessionBase extends CommandsCommandExecutor implements SessionIntf {
+public class Session extends CommandsCommandExecutor implements SessionIntf {
 	/**
 	 * a reference to a SessionCommon.
 	 */
-	private SessionCommon sessionCommonRef;
+	private SessionCommonEnv sessionCommonRef;
 	
+	/**
+	 * this is a session-specific setting.
+	 */
 	private boolean continueOnError = false;
 
 	private CliLineReader cliLineReader;
@@ -48,11 +51,11 @@ public class SessionBase extends CommandsCommandExecutor implements SessionIntf 
 	
 	/////////////////////////////////////////////////////
 	
-	public SessionBase(CommandExecutorIntf commandExecutor) {
-		sessionCommonRef = new SessionCommon(commandExecutor);
+	public Session(CommandExecutorIntf commandExecutor) {
+		sessionCommonRef = new SessionCommonEnv(commandExecutor);
 	}
 	
-	public SessionBase(SessionCommon sessionCommonRef) {
+	public Session(SessionCommonEnv sessionCommonRef) {
 		this.sessionCommonRef = sessionCommonRef;
 	}
 	
@@ -60,7 +63,7 @@ public class SessionBase extends CommandsCommandExecutor implements SessionIntf 
 	 * copy constructor
 	 * @param parentSession
 	 */
-	public SessionBase(SessionBase parentSession) {
+	public Session(Session parentSession) {
 		// copy settings
 		
 		this.sessionCommonRef = parentSession.getSessionCommonRef();
@@ -72,8 +75,8 @@ public class SessionBase extends CommandsCommandExecutor implements SessionIntf 
 	 * This method is meant to be polymorphic.
 	 * @return
 	 */
-	public SessionBase newSession() {
-		return new SessionBase(this);
+	public Session newSession() {
+		return new Session(this);
 	}
 	
 	@Override
@@ -128,7 +131,7 @@ public class SessionBase extends CommandsCommandExecutor implements SessionIntf 
 	protected String fetchCmdLine() throws IOException, IllegalInputCharException, UnexpectedEofException {
 		String cmdLine;
 		try {
-			cmdLine=getCliLineReader().readCliLine();
+			cmdLine=cliLineReader.readCliLine();
 			
 		} catch (EofException e) {
 			return null;
@@ -180,8 +183,8 @@ public class SessionBase extends CommandsCommandExecutor implements SessionIntf 
 				sessionCommonRef.getSessionTranscriptor().onCmdLine(cmdLine);
 			}
 			
-			if (getCmdLineListener()!=null)
-				getCmdLineListener().accept(cmdLine);
+			if (cmdLineListener!=null)
+				cmdLineListener.accept(cmdLine);
 			
 			if ( !cmdLine.isEmpty() && cmdLine.charAt(0)=='#') {
 //				getCurrentSession().getPrintWriter().println(cmdLine);
@@ -230,10 +233,6 @@ public class SessionBase extends CommandsCommandExecutor implements SessionIntf 
 		return new CmdReturnType(ReturnCode.NOP);
 	}
 	
-	protected CliLineReader getCliLineReader() {
-		return cliLineReader;
-	}
-
 	protected CmdReturnType getLastCmdReturn() {
 		return sessionCommonRef.getEnvironment().getLastCmdReturn();
 	}
@@ -250,7 +249,7 @@ public class SessionBase extends CommandsCommandExecutor implements SessionIntf 
 		this.continueOnError = continueOnError;
 	}
 
-	protected SessionCommon getSessionCommonRef() {
+	public SessionCommonEnv getSessionCommonRef() {
 		return sessionCommonRef;
 	}
 
@@ -270,10 +269,6 @@ public class SessionBase extends CommandsCommandExecutor implements SessionIntf 
 		sessionCommonRef.setPromptFunc(promptFunc);
 	}
 	
-	public Consumer<String> getCmdLineListener() {
-		return cmdLineListener;
-	}
-
 	public void setCmdLineListener(Consumer<String> cmdLineListener) {
 		this.cmdLineListener = cmdLineListener;
 	}

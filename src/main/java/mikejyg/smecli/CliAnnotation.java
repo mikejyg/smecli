@@ -4,8 +4,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
-import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
+import java.util.ArrayList;
 
 /**
  * to provide a way of adding commands to a CLI through annotation.
@@ -27,7 +26,9 @@ public class CliAnnotation {
 		String helpString() default "";
 	}
 	
-	public static void addMethods(CommandsCommandExecutor cliCommands, Object cmdObj) {
+	public static ArrayList<CommandStruct> getCliCommands(Object cmdObj) {
+		ArrayList<CommandStruct> cmdList = new ArrayList<>();
+		
 		Method [] methods = cmdObj.getClass().getMethods();
 		
 		for (Method method : methods) {
@@ -41,7 +42,8 @@ public class CliAnnotation {
 			else
 				commandName = cliCmd.commandName();
 			
-			cliCommands.addCommand(commandName, cliCmd.shorthands(), cliCmd.helpString()
+			CommandStruct commandStruct = new CommandStruct(
+					commandName, cliCmd.shorthands(), cliCmd.helpString()
 					, (x) -> { 
 						CmdReturnType r = null;
 						try {
@@ -53,9 +55,11 @@ public class CliAnnotation {
 						
 						return r;
 					});
-			
+		
+			cmdList.add(commandStruct);
 		}
-
+		
+		return cmdList;
 	}
 	
 

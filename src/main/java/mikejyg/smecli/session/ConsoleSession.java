@@ -13,6 +13,7 @@ import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
+import mikejyg.smecli.commands.SourceCommand;
 
 /**
  * A session that has console interactions.
@@ -21,7 +22,7 @@ import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
  *
  */
 public class ConsoleSession implements SessionIntf {
-	private SessionBase sessionBase;
+	private Session sessionBase;
 	
 	private ConsoleSessionCommon consoleSessionCommonRef;
 	
@@ -37,7 +38,7 @@ public class ConsoleSession implements SessionIntf {
 	
 	/////////////////////////////////////////////////////
 	
-	public ConsoleSession(SessionBase session) {
+	public ConsoleSession(Session session) {
 		this.sessionBase = session;
 		session.setContinueOnError(true);	// the first console session is the root console session.
 		
@@ -60,10 +61,6 @@ public class ConsoleSession implements SessionIntf {
 	
 	public ConsoleSession(CommandExecutorIntf commandExecutor) {
 		this( new SessionWithLoop(commandExecutor) );
-	}
-	
-	public ConsoleSession(SessionCommon sessionCommon) {
-		this( new SessionWithLoop(sessionCommon) );
 	}
 	
 	/**
@@ -109,10 +106,10 @@ public class ConsoleSession implements SessionIntf {
 	
 	private void initSourceCommand() {
 		// override the source command
-		SourceCommand sourceCommandExecutor = new SourceCommand( ()->{
+		SourceCommand sourceCommand = new SourceCommand( ()->{
 			return newSession();
 		});
-		sessionBase.addMethods(sourceCommandExecutor);
+		sessionBase.addMethods(sourceCommand);
 	}
 	
 	@Override
@@ -187,7 +184,7 @@ public class ConsoleSession implements SessionIntf {
 		sessionBase.setContinueOnError(continueOnError);
 	}
 
-	public SessionBase getSessionBase() {
+	public Session getSessionBase() {
 		return sessionBase;
 	}
 

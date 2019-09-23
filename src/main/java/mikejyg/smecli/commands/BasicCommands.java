@@ -1,42 +1,20 @@
-package mikejyg.smecli.cmdexecutor;
+package mikejyg.smecli.commands;
 
 import mikejyg.smecli.CliAnnotation.CliCommand;
 import mikejyg.smecli.CliUtils;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
-import mikejyg.smecli.Environment;
-import mikejyg.smecli.commands.AssertCommand;
+import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 
-/**
- * a CommandExecutorBase with some built-in commands
- * @author jgu
- *
- */
-public class CommandExecutor extends CommandsCommandExecutor {
-
-	private Environment environmentRef;
+public class BasicCommands {
 	
-	//////////////////////////////////////////////////////
+	private CommandExecutorIntf commandExecutorIntfRef;
 	
-	public CommandExecutor(Environment environmentRef) {
-		this.environmentRef = environmentRef;
-		addMethods(this);
-		addCommands();
-	}
+	/////////////////////////////////////////////////////////////////////
 	
-	@Override
-	public CmdReturnType execCmd(CmdCallType cmdCall) throws Exception  {
-		CmdReturnType cmdReturn = super.execCmd(cmdCall);
-		
-		if ( cmdReturn.getReturnCode().isCmdExecResult() )
-			environmentRef.setLastCmdReturn(cmdReturn);
-		
-		return cmdReturn;
-	}
-	
-	private void addCommands() {
-		AssertCommand.addToCliCommands(this, ()->{ return environmentRef.getLastCmdReturn(); });
+	public BasicCommands(CommandExecutorIntf commandExecutorIntf) {
+		this.commandExecutorIntfRef = commandExecutorIntf;
 	}
 	
 	@CliCommand(helpString = "sleep for specified time (seconds in double).")
@@ -69,9 +47,8 @@ public class CommandExecutor extends CommandsCommandExecutor {
 	
 	@CliCommand(shorthands = {"?"}, helpString = "print help.")
 	public CmdReturnType help(CmdCallType cmdCall) {
-		return new CmdReturnType(ReturnCode.OK, toHelpString());
+		return new CmdReturnType(ReturnCode.OK, commandExecutorIntfRef.toHelpString());
 	}
 	
-
+	
 }
-

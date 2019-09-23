@@ -1,4 +1,4 @@
-package mikejyg.smecli.session;
+package mikejyg.smecli.commands;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -15,6 +15,7 @@ import mikejyg.smecli.CliUtils;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.session.SessionIntf;
 
 /**
  * The source command.

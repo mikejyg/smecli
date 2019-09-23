@@ -5,8 +5,7 @@ import java.io.IOException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.session.ConsoleSession;
-import mikejyg.smecli.session.SessionBase;
-import mikejyg.smecli.session.SessionCommon;
+import mikejyg.smecli.session.Session;
 import mikejyg.smecli.session.SessionWithLoop;
 import mikejyg.smecli.socket.RemoteCommandExecutor;
 
@@ -18,15 +17,17 @@ import mikejyg.smecli.socket.RemoteCommandExecutor;
  */
 public class CliClient {
 	private RemoteCommandExecutor rce;
-	private SessionBase sessionBase;
+	private Session sessionBase;
 	private ConsoleSession consoleSession;
 	
 	/////////////////////////////////////////////////////////
 	
 	public CliClient() {
 		rce = new RemoteCommandExecutor();
-		sessionBase = new SessionWithLoop(new SessionCommon(rce));
+		sessionBase = new Session(rce);
 		consoleSession = new ConsoleSession(sessionBase);
+		SessionWithLoop sessionWithLoop = new SessionWithLoop(sessionBase);
+		rce.addCommands(sessionWithLoop.getCommandStructs());
 	}
 	
 	public void connect(String hostname, int port) throws IOException {

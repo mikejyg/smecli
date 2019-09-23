@@ -11,6 +11,7 @@ import mikejyg.smecli.CliUtils;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.CommandStruct;
 import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 
 /**
@@ -22,7 +23,7 @@ import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
  * @author mikejyg
  *
  */
-public class SessionWithLoop extends SessionBase {
+public class SessionWithLoop extends Session {
 	
 	@SuppressWarnings("unused")
 	private SessionCommands sessionCommands;
@@ -62,16 +63,11 @@ public class SessionWithLoop extends SessionBase {
 		initCommands();
 	}
 	
-	public SessionWithLoop(SessionCommon sessionCommonRef) {
-		super(sessionCommonRef);
-		initCommands();
-	}
-	
 	/**
 	 * copy settings from a parent session.
 	 * @param parentSession
 	 */
-	public SessionWithLoop(SessionBase parentSession) {
+	public SessionWithLoop(Session parentSession) {
 		super(parentSession);
 		initCommands();
 	}
@@ -79,6 +75,7 @@ public class SessionWithLoop extends SessionBase {
 	private void initCommands() {
 		// add basic commands
 		sessionCommands = new SessionCommands(this);
+		addCommands(sessionCommands.getCommands());
 		
 		// add the source command
 //		sourceCommandExecutor = new SourceCommandExecutor( ()->{
@@ -86,7 +83,7 @@ public class SessionWithLoop extends SessionBase {
 //		});
 //		CliAnnotation.addMethods(this, sourceCommandExecutor);
 		
-		addCommands();
+		addCommands(getCommandStructs());
 	}
 	
 	@Override
@@ -96,8 +93,10 @@ public class SessionWithLoop extends SessionBase {
 
 	/////////////////////////////////////////////
 	
-	protected void addCommands() {
-		addCommand("repeat", null, "repeat the following commands, until done, for argument times"
+	public List<CommandStruct> getCommandStructs() {
+		ArrayList<CommandStruct> cmds = new ArrayList<>();
+		
+		cmds.add( new CommandStruct("repeat", null, "repeat the following commands, until done, for argument times"
 				, (CmdCallType cmdCall)->{
 			String arg = CliUtils.getArg0(cmdCall);
 			if ( arg.isEmpty() )
@@ -110,9 +109,9 @@ public class SessionWithLoop extends SessionBase {
 			loopStack.add(new LoopStruct(iterations));
 			currentLoopStruct = loopStack.lastElement();
 			return new CmdReturnType(ReturnCode.NOP);
-		});
+		}));
 		
-		addCommand("done", null, "close of a loop."
+		cmds.add( new CommandStruct("done", null, "close of a loop."
 				, (CmdCallType cmdCall)->{
 			if (currentLoopStruct==null)
 				return new CmdReturnType(ReturnCode.INVALID_COMMAND, "no matching loop start.");
@@ -133,8 +132,9 @@ public class SessionWithLoop extends SessionBase {
 				clbCounter = currentLoopStruct.beginIdx;
 			}
 			return new CmdReturnType(ReturnCode.NOP);
-		});
+		}));
 
+		return cmds;
 	}
 	
 	@Override

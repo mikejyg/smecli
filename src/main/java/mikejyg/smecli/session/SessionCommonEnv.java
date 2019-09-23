@@ -12,7 +12,7 @@ import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
  * @author mikejyg
  *
  */
-public class SessionCommon {
+public class SessionCommonEnv {
 	private CommandExecutorIntf commandExecutorRef;
 	
 	private Environment environment = new Environment();
@@ -27,7 +27,7 @@ public class SessionCommon {
 	
 	/////////////////////////////////////////////////
 	
-	public SessionCommon(CommandExecutorIntf commandExecutor) {
+	public SessionCommonEnv(CommandExecutorIntf commandExecutor) {
 		this.commandExecutorRef = commandExecutor;
 	}
 	
