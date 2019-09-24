@@ -18,4 +18,6 @@ public interface SessionIntf {
 	
 	public CmdReturnType execAll() throws IOException, UnexpectedEofException, IllegalInputCharException;
 	
+	public SessionIntf newSubSession();
+	
 }

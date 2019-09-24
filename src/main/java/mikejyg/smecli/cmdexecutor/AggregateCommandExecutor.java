@@ -5,7 +5,9 @@ import java.util.List;
 
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
+import mikejyg.smecli.Environment;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
+import mikejyg.smecli.CommandStruct;
 
 /**
  * A CommandExecutor that uses a list of command executors.
@@ -16,6 +18,7 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  *
  */
 public class AggregateCommandExecutor implements CommandExecutorIntf {
+	private Environment environment = new Environment();
 	
 	/**
 	 * a list of command executors to consult, before cliCommands.
@@ -59,6 +62,17 @@ public class AggregateCommandExecutor implements CommandExecutorIntf {
 		return commandExecutorList;
 	}
 
-	
+	@Override
+	public Environment getEnvironment() {
+		return environment;
+	}
+
+	@Override
+	public void addCommand(CommandStruct commandStruct) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
 }
 

@@ -2,7 +2,6 @@ package mikejyg.smecli.session;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.function.Consumer;
 
 import mikejyg.smecli.CliLineReader;
 import mikejyg.smecli.CmdCallType;
@@ -11,7 +10,6 @@ import mikejyg.smecli.CliLineReader.EofException;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
-import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
 import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 
 /**
@@ -34,7 +32,7 @@ import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
  * @author mikejyg
  *
  */
-public class Session extends CommandsCommandExecutor implements SessionIntf {
+public class Session implements SessionIntf {
 	/**
 	 * a reference to a SessionCommon.
 	 */
@@ -46,8 +44,6 @@ public class Session extends CommandsCommandExecutor implements SessionIntf {
 	private boolean continueOnError = false;
 
 	private CliLineReader cliLineReader;
-	
-	private Consumer<String> cmdLineListener=null;
 	
 	/////////////////////////////////////////////////////
 	
@@ -75,7 +71,8 @@ public class Session extends CommandsCommandExecutor implements SessionIntf {
 	 * This method is meant to be polymorphic.
 	 * @return
 	 */
-	public Session newSession() {
+	@Override
+	public Session newSubSession() {
 		return new Session(this);
 	}
 	
@@ -84,37 +81,16 @@ public class Session extends CommandsCommandExecutor implements SessionIntf {
 		cliLineReader = new CliLineReader(reader);
 	}
 	
-	@Override
-	public CmdReturnType execCmd(CmdCallType cmdCall) throws Exception {
-		// do built-in command first...
-		CmdReturnType cmdReturn = super.execCmd(cmdCall);
+	protected CmdReturnType execCmd(CmdCallType cmdCall) throws Exception {
+		CmdReturnType cmdReturn = getCommandExecutorRef().execCmd(cmdCall);
 		
-		if (cmdReturn.getReturnCode()==ReturnCode.INVALID_COMMAND) {
-			cmdReturn = getCommandExecutorRef().execCmd(cmdCall);
-		}
-		
-		if ( cmdReturn.getReturnCode().isCmdExecResult() )
-			setLastCmdReturn(cmdReturn);
-			
 		return cmdReturn;
 	}
-	
-	@Override
-	public String toHelpString() {
-		String helpStr=super.toHelpString();
-		
-		if ( ! helpStr.isEmpty() )
-			helpStr = helpStr + '\n';
-		
-		helpStr = helpStr + "from command executor: \n" + getCommandExecutorRef().toHelpString();
 
-		return helpStr;
-	}
-	
 	/** 
 	 * @param cmdLine
 	 */
-	protected CmdReturnType execCmd(String cmdLine) throws Exception {
+	private CmdReturnType execCmd(String cmdLine) throws Exception {
 		CmdCallType cmdCall = CmdCallType.toCmdCall(cmdLine);
 		if (cmdCall.isEmpty())
 			return new CmdReturnType(ReturnCode.NOP);			// no command was executed
@@ -183,8 +159,8 @@ public class Session extends CommandsCommandExecutor implements SessionIntf {
 				sessionCommonRef.getSessionTranscriptor().onCmdLine(cmdLine);
 			}
 			
-			if (cmdLineListener!=null)
-				cmdLineListener.accept(cmdLine);
+			if (sessionCommonRef.getCmdLineListener()!=null)
+				sessionCommonRef.getCmdLineListener().accept(cmdLine);
 			
 			if ( !cmdLine.isEmpty() && cmdLine.charAt(0)=='#') {
 //				getCurrentSession().getPrintWriter().println(cmdLine);
@@ -269,9 +245,5 @@ public class Session extends CommandsCommandExecutor implements SessionIntf {
 		sessionCommonRef.setPromptFunc(promptFunc);
 	}
 	
-	public void setCmdLineListener(Consumer<String> cmdLineListener) {
-		this.cmdLineListener = cmdLineListener;
-	}
-
 
 }

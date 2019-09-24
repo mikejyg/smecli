@@ -12,8 +12,6 @@ import mikejyg.smecli.CliUtils;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
-import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
-import mikejyg.smecli.commands.SourceCommand;
 
 /**
  * A session that has console interactions.
@@ -22,7 +20,7 @@ import mikejyg.smecli.commands.SourceCommand;
  *
  */
 public class ConsoleSession implements SessionIntf {
-	private Session sessionBase;
+	private Session session;
 	
 	private ConsoleSessionCommon consoleSessionCommonRef;
 	
@@ -39,7 +37,7 @@ public class ConsoleSession implements SessionIntf {
 	/////////////////////////////////////////////////////
 	
 	public ConsoleSession(Session session) {
-		this.sessionBase = session;
+		this.session = session;
 		session.setContinueOnError(true);	// the first console session is the root console session.
 		
 		consoleSessionCommonRef = new ConsoleSessionCommon(session.getSessionCommonRef());
@@ -54,13 +52,7 @@ public class ConsoleSession implements SessionIntf {
 		
 		initCmdLineListener();
 		
-		session.addMethods(this);
-		
-		initSourceCommand();
-	}
-	
-	public ConsoleSession(CommandExecutorIntf commandExecutor) {
-		this( new SessionWithLoop(commandExecutor) );
+		session.getCommandExecutorRef().addMethods(this);
 	}
 	
 	/**
@@ -68,8 +60,8 @@ public class ConsoleSession implements SessionIntf {
 	 * @param parentSession
 	 */
 	public ConsoleSession(ConsoleSession parentSession) {
-		sessionBase = parentSession.sessionBase.newSession();
-		sessionBase.setContinueOnError(false);
+		session = parentSession.session.newSubSession();
+		session.setContinueOnError(false);
 		
 		// copy settings
 		this.consoleSessionCommonRef = parentSession.consoleSessionCommonRef;
@@ -77,8 +69,6 @@ public class ConsoleSession implements SessionIntf {
 		localEcho = true;
 		
 		initCmdLineListener();
-		
-		initSourceCommand();
 	}
 	
 	/**
@@ -86,12 +76,13 @@ public class ConsoleSession implements SessionIntf {
 	 * This method is meant to be polymorphic.
 	 * @return
 	 */
-	public ConsoleSession newSession() {
+	@Override
+	public ConsoleSession newSubSession() {
 		return new ConsoleSession(this);
 	}
 	
 	private void initCmdLineListener() {
-		sessionBase.setCmdLineListener( (l)->{
+		session.getSessionCommonRef().setCmdLineListener( (l)->{
 			if (interactiveFlag)
 				consoleSessionCommonRef.setPrompted(false);
 			
@@ -104,22 +95,14 @@ public class ConsoleSession implements SessionIntf {
 		
 	}
 	
-	private void initSourceCommand() {
-		// override the source command
-		SourceCommand sourceCommand = new SourceCommand( ()->{
-			return newSession();
-		});
-		sessionBase.addMethods(sourceCommand);
-	}
-	
 	@Override
 	public void setReader(Reader reader) {
-		sessionBase.setReader(reader);
+		session.setReader(reader);
 	}
 	
 	@Override
 	public CmdReturnType execAll() throws IOException, UnexpectedEofException, IllegalInputCharException {
-		return sessionBase.execAll();
+		return session.execAll();
 	}
 	
 	@CliCommand(helpString = "With an argument, set local echo to on or off, or without argument, show current local echo state.")
@@ -181,11 +164,11 @@ public class ConsoleSession implements SessionIntf {
 	}
 	
 	public void setContinueOnError(boolean continueOnError) {
-		sessionBase.setContinueOnError(continueOnError);
+		session.setContinueOnError(continueOnError);
 	}
 
-	public Session getSessionBase() {
-		return sessionBase;
+	public Session getSession() {
+		return session;
 	}
 
 	/**

@@ -158,6 +158,18 @@ public class CliRemoteTest {
 				
 				return new CmdReturnType(CmdReturnType.ReturnCode.OK, "1");
 			}
+
+			@Override
+			public Environment getEnvironment() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
+			public void addCommand(CommandStruct commandStruct) {
+				// TODO Auto-generated method stub
+				
+			}
 			
 		}, 0);
 		

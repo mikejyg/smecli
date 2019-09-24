@@ -10,7 +10,6 @@ import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 import mikejyg.smecli.CommandStruct;
-import mikejyg.smecli.commands.AssertCommand;
 
 /**
  * This class provides some basic commands for a session.
@@ -53,18 +52,10 @@ public class SessionCommands {
 					return new CmdReturnType(ReturnCode.OK, sessionRef.isContinueOnError() ? "on" : "off");
 				}) );
 		
-		cmds.add( AssertCommand.getCommandStruct(()->{
-			return sessionRef.getLastCmdReturn();}) );
-		
 		cmds.addAll( CliAnnotation.getCliCommands(this) );
 		
 		return cmds;
 	}		
-	
-	@CliCommand(shorthands = {"?"}, helpString = "print help.")
-	public CmdReturnType help(CmdCallType cmdCall) {
-		return new CmdReturnType(ReturnCode.OK, sessionRef.toHelpString());
-	}
 	
 	@CliCommand(commandName="exit", helpString = "exit current session with an optional argument.")
 	public CmdReturnType exitSession(CmdCallType cmdCall) {

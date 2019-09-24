@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+import mikejyg.smecli.CliAnnotation.CliCommand;
 import mikejyg.smecli.CliLineReader.IllegalInputCharException;
 import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CliUtils;
@@ -13,6 +14,7 @@ import mikejyg.smecli.CmdReturnType;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 import mikejyg.smecli.CommandStruct;
 import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
+import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
 
 /**
  * A session with basic and loop commands.
@@ -24,13 +26,7 @@ import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
  *
  */
 public class SessionWithLoop extends Session {
-	
-	@SuppressWarnings("unused")
-	private SessionCommands sessionCommands;
-	
-	// for the source command
-//	private SourceCommandExecutor sourceCommandExecutor;
-	
+
 	// for loops
 	
 	private List<String> cmdLineBuffer = new ArrayList<>();
@@ -56,11 +52,20 @@ public class SessionWithLoop extends Session {
 	private Stack<LoopStruct> loopStack = new Stack<>();
 	private LoopStruct currentLoopStruct = null; 
 	
+	// session instance specific commands
+	private CommandsCommandExecutor sessionCommandExecutor;
+	
 	/////////////////////////////////////////////
 	
 	public SessionWithLoop(CommandExecutorIntf commandExecutor) {
 		super(commandExecutor);
-		initCommands();
+		
+		// really just to override the help command
+		commandExecutor.addMethods(this);
+
+		// instance specific commands
+		sessionCommandExecutor = new CommandsCommandExecutor(commandExecutor.getEnvironment());
+		sessionCommandExecutor.addCommands(getCommandStructs());
 	}
 	
 	/**
@@ -69,26 +74,31 @@ public class SessionWithLoop extends Session {
 	 */
 	public SessionWithLoop(Session parentSession) {
 		super(parentSession);
-		initCommands();
-	}
-	
-	private void initCommands() {
-		// add basic commands
-		sessionCommands = new SessionCommands(this);
-		addCommands(sessionCommands.getCommands());
 		
-		// add the source command
-//		sourceCommandExecutor = new SourceCommandExecutor( ()->{
-//			return new SessionWithLoop(this);
-//		});
-//		CliAnnotation.addMethods(this, sourceCommandExecutor);
-		
-		addCommands(getCommandStructs());
+		// instance specific commands
+		sessionCommandExecutor = new CommandsCommandExecutor(parentSession.getCommandExecutorRef().getEnvironment());
+		sessionCommandExecutor.addCommands(getCommandStructs());
 	}
 	
 	@Override
-	public SessionWithLoop newSession() {
+	public SessionWithLoop newSubSession() {
 		return new SessionWithLoop(this);
+	}
+	
+	@Override
+	public CmdReturnType execCmd(CmdCallType cmdCall) throws Exception {
+		// do session command first...
+		if ( sessionCommandExecutor.hasCommand(cmdCall) ) {
+			CmdReturnType cmdReturn = sessionCommandExecutor.execCmd(cmdCall);
+
+			if ( cmdReturn.getReturnCode().isCmdExecResult() )
+				setLastCmdReturn(cmdReturn);
+				
+			return cmdReturn;
+			
+		} else {
+			return super.execCmd(cmdCall);
+		}
 	}
 
 	/////////////////////////////////////////////
@@ -135,6 +145,20 @@ public class SessionWithLoop extends Session {
 		}));
 
 		return cmds;
+	}
+
+	/**
+	 * override the help command
+	 * @param cmdCall
+	 * @return
+	 */
+	@CliCommand(shorthands = {"?"}, helpString = "print help.")
+	public CmdReturnType help(CmdCallType cmdCall) {
+		String helpStr = "SessionWithLoop instance specific commands:\n" + sessionCommandExecutor.toHelpString();
+		
+		helpStr += "\n\ncommand executor commands:\n" + getCommandExecutorRef().toHelpString();
+		
+		return new CmdReturnType(ReturnCode.OK, helpStr);
 	}
 	
 	@Override

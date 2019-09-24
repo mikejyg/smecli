@@ -26,12 +26,12 @@ import mikejyg.smecli.session.SessionIntf;
 public class SourceCommand {
 	
 	// the function to get a new session.
-	private Supplier<SessionIntf> newClisessionFunc;
+	private Supplier<SessionIntf> newSessionFunc;
 	
 	//////////////////////////////////////////
 	
-	public SourceCommand(Supplier<SessionIntf> newClisessionFunc) {
-		this.newClisessionFunc = newClisessionFunc;
+	public SourceCommand(Supplier<SessionIntf> newSessionFunc) {
+		this.newSessionFunc = newSessionFunc;
 	}
 	
 	/**
@@ -67,7 +67,7 @@ public class SourceCommand {
 		
 		CmdReturnType cmdReturn;
 		try ( InputStreamReader reader = new InputStreamReader( inputStream, StandardCharsets.UTF_8 ) )  {
-			SessionIntf newSession  = newClisessionFunc.get();
+			SessionIntf newSession  = newSessionFunc.get();
 			newSession.setReader(reader);
 			cmdReturn = newSession.execAll();
 		}

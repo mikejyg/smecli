@@ -1,18 +1,15 @@
 package mikejyg.smecli.cmdexecutor;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import mikejyg.smecli.CliAnnotation;
 import mikejyg.smecli.CmdCallType;
-import mikejyg.smecli.CmdFunction;
 import mikejyg.smecli.CmdReturnType;
+import mikejyg.smecli.CmdReturnType.ReturnCode;
 import mikejyg.smecli.CommandStruct;
 import mikejyg.smecli.Environment;
-import mikejyg.smecli.CmdReturnType.ReturnCode;
 
 /**
  * A command executor that holds a list of commands.
@@ -21,7 +18,7 @@ import mikejyg.smecli.CmdReturnType.ReturnCode;
  *
  */
 public class CommandsCommandExecutor implements CommandExecutorIntf {
-	private Environment environmentRef = new Environment();
+	private Environment environment;
 	
 	// command storage & indexes
 	
@@ -31,6 +28,15 @@ public class CommandsCommandExecutor implements CommandExecutorIntf {
 
 	////////////////////////////////////////////////////////////////
 	
+	public CommandsCommandExecutor() {
+		environment = new Environment();
+	}
+	
+	public CommandsCommandExecutor(Environment environment) {
+		this.environment = environment;
+	}
+	
+	@Override
 	public void addCommand(CommandStruct commandStruct) {
 		CommandStruct existingCs = cmdMap.get(commandStruct.commandName);
 		if (existingCs!=null) {
@@ -47,13 +53,14 @@ public class CommandsCommandExecutor implements CommandExecutorIntf {
 		}
 	}
 	
-	public void addCommand(String commandName, String shorthands[], String helpString, CmdFunction cmdFunc) {
-		addCommand( new CommandStruct(commandName, shorthands, helpString, cmdFunc) );
-	}
-	
-	public CommandStruct getCommand(String commandName) {
+	private CommandStruct getCommand(String commandName) {
 		return cmdMap.get(commandName);
 	}
+	
+	public boolean hasCommand(CmdCallType cmdCall) {
+		return getCommand(cmdCall.getCommandName()) != null ? true : false;
+	}
+	
 	
 	/**
 	 * @throws InvokeCommandFailed
@@ -71,7 +78,7 @@ public class CommandsCommandExecutor implements CommandExecutorIntf {
 		}
 		
 		if ( cmdReturn.getReturnCode().isCmdExecResult() )
-			environmentRef.setLastCmdReturn(cmdReturn);
+			environment.setLastCmdReturn(cmdReturn);
 		
 		return cmdReturn;
 	}
@@ -88,22 +95,13 @@ public class CommandsCommandExecutor implements CommandExecutorIntf {
 		return helpStr;
 	}
 	
-	public void addCommands(Collection<CommandStruct> commandStructs) {
-		for (CommandStruct commandStruct : commandStructs) {
-			addCommand(commandStruct);
-		}
-	}
-	
-	public void addMethods(Object cmdObj) {
-		addCommands(CliAnnotation.getCliCommands(cmdObj));
-	}
-	
 	public boolean isEmpty() {
 		return commands.isEmpty();
 	}
 
-	public Environment getEnvironmentRef() {
-		return environmentRef;
+	@Override
+	public Environment getEnvironment() {
+		return environment;
 	}
 
 	

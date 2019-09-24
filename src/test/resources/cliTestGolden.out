@@ -1,35 +1,37 @@
 > help
 OK
-end	exit current session and all parent sessions with an optional argument.
-exit	exit current session with an optional argument.
-help, ?	print help.
-continueOnError, coe	set whether to continue on command execution error. if no argument is given, prints out current state, otherwise use argument on or off.
-assert	assert the value of the last result. 1st argument the return code string, 2nd argument(optional) is is the result string.
+SessionWithLoop instance specific commands:
 repeat	repeat the following commands, until done, for argument times
 done	close of a loop.
-localEcho	With an argument, set local echo to on or off, or without argument, show current local echo state.
-source, .	parameter: script_filename	execute the script file in a new session.
-from command executor: 
+
+command executor commands:
 echo	echo arguments.
 sleep	sleep for specified time (seconds in double).
-help, ?	print help.
 assert	assert the value of the last result. 1st argument the return code string, 2nd argument(optional) is is the result string.
+help, ?	print help.
+continueOnError, coe	set whether to continue on command execution error. if no argument is given, prints out current state, otherwise use argument on or off.
+exit	exit current session with an optional argument.
+end	exit current session and all parent sessions with an optional argument.
+localEcho	With an argument, set local echo to on or off, or without argument, show current local echo state.
+source, .	parameter: script_filename	execute the script file in a new session.
+system, sys	execute a system command with args
 > ?
 OK
-end	exit current session and all parent sessions with an optional argument.
-exit	exit current session with an optional argument.
-help, ?	print help.
-continueOnError, coe	set whether to continue on command execution error. if no argument is given, prints out current state, otherwise use argument on or off.
-assert	assert the value of the last result. 1st argument the return code string, 2nd argument(optional) is is the result string.
+SessionWithLoop instance specific commands:
 repeat	repeat the following commands, until done, for argument times
 done	close of a loop.
-localEcho	With an argument, set local echo to on or off, or without argument, show current local echo state.
-source, .	parameter: script_filename	execute the script file in a new session.
-from command executor: 
+
+command executor commands:
 echo	echo arguments.
 sleep	sleep for specified time (seconds in double).
-help, ?	print help.
 assert	assert the value of the last result. 1st argument the return code string, 2nd argument(optional) is is the result string.
+help, ?	print help.
+continueOnError, coe	set whether to continue on command execution error. if no argument is given, prints out current state, otherwise use argument on or off.
+exit	exit current session with an optional argument.
+end	exit current session and all parent sessions with an optional argument.
+localEcho	With an argument, set local echo to on or off, or without argument, show current local echo state.
+source, .	parameter: script_filename	execute the script file in a new session.
+system, sys	execute a system command with args
 > badCmd
 INVALID_COMMAND
 > echo abc

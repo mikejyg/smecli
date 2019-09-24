@@ -13,9 +13,7 @@ import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
  *
  */
 public class SessionCommonEnv {
-	private CommandExecutorIntf commandExecutorRef;
-	
-	private Environment environment = new Environment();
+	private CommandExecutorIntf commandExecutor;
 	
 	private boolean endFlag=false;	// exit all (nested) sessions.
 	
@@ -25,20 +23,18 @@ public class SessionCommonEnv {
 	
 	private SessionTranscriptor sessionTranscriptor=null;
 	
+	private Consumer<String> cmdLineListener=null;
+	
 	/////////////////////////////////////////////////
 	
 	public SessionCommonEnv(CommandExecutorIntf commandExecutor) {
-		this.commandExecutorRef = commandExecutor;
+		this.commandExecutor = commandExecutor;
 	}
 	
 	/////////////////////////////////////////////////
 
 	public CommandExecutorIntf getCommandExecutorRef() {
-		return commandExecutorRef;
-	}
-
-	public void setCommandExecutorRef(CommandExecutorIntf commandExecutorRef) {
-		this.commandExecutorRef = commandExecutorRef;
+		return commandExecutor;
 	}
 
 	public boolean isEndFlag() {
@@ -74,7 +70,15 @@ public class SessionCommonEnv {
 	}
 
 	public Environment getEnvironment() {
-		return environment;
+		return commandExecutor.getEnvironment();
+	}
+
+	public void setCmdLineListener(Consumer<String> cmdLineListener) {
+		this.cmdLineListener = cmdLineListener;
+	}
+
+	public Consumer<String> getCmdLineListener() {
+		return cmdLineListener;
 	}
 
 
