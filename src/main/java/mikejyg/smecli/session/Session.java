@@ -118,10 +118,6 @@ public class Session implements SessionIntf {
 	
 	/**
 	 * execute all commands from the reader.
-	 * @throws IOException 
-	 * @throws UnexpectedEofException 
-	 * @throws IllegalInputCharException 
-	 * @throws ExitAllSessions 
 	 * 
 	 * Conversions on using command returns and lastCmdExecResult:
 	 *   Each command returns a CmdReturnType.
@@ -138,43 +134,58 @@ public class Session implements SessionIntf {
 	 * 
 	 */
 	@Override
-	public CmdReturnType execAll() throws IOException, UnexpectedEofException, IllegalInputCharException {
+	public CmdReturnType execAll() {
 		while ( !isEndFlag() ) {
 			
 			if (sessionCommonRef.getPromptFunc()!=null) {
 				sessionCommonRef.getPromptFunc().run();
 			}
 			
-			String cmdLine = fetchCmdLine();
+			String cmdLine = null;
+			CmdReturnType cmdReturn = null;
 			
-			if (cmdLine==null) {
-//				getPrintWriter().println("EOF - exiting...");
+			try {
+				cmdLine = fetchCmdLine();
+				
+				if (cmdLine==null) {
+//					getPrintWriter().println("EOF - exiting...");
+					break;
+				}
+				
+				if (cmdLine.isEmpty())
+					continue;
+				
+				if (sessionCommonRef.getSessionTranscriptor()!=null) {
+					sessionCommonRef.getSessionTranscriptor().onCmdLine(cmdLine);
+				}
+				
+				if (sessionCommonRef.getCmdLineListener()!=null)
+					sessionCommonRef.getCmdLineListener().accept(cmdLine);
+				
+				if ( !cmdLine.isEmpty() && cmdLine.charAt(0)=='#') {
+//					getCurrentSession().getPrintWriter().println(cmdLine);
+					continue;
+				}
+				
+				try {
+					cmdReturn = execCmd(cmdLine);
+					
+				} catch (Exception e) {
+					cmdReturn=new CmdReturnType(ReturnCode.FAILURE, e.getMessage());
+				}
+
+			} catch (IOException e) {
+				e.printStackTrace();
+				cmdReturn = new CmdReturnType(ReturnCode.FAILURE, "IOException: " + e.getMessage());
+				
+			} catch (IllegalInputCharException e) {
+				cmdReturn = new CmdReturnType(ReturnCode.FAILURE, "illegal input character");
+				
+			} catch (UnexpectedEofException e) {
+				e.printStackTrace();
 				break;
 			}
 			
-			if (cmdLine.isEmpty())
-				continue;
-			
-			if (sessionCommonRef.getSessionTranscriptor()!=null) {
-				sessionCommonRef.getSessionTranscriptor().onCmdLine(cmdLine);
-			}
-			
-			if (sessionCommonRef.getCmdLineListener()!=null)
-				sessionCommonRef.getCmdLineListener().accept(cmdLine);
-			
-			if ( !cmdLine.isEmpty() && cmdLine.charAt(0)=='#') {
-//				getCurrentSession().getPrintWriter().println(cmdLine);
-				continue;
-			}
-			
-			CmdReturnType cmdReturn;
-			try {
-				cmdReturn = execCmd(cmdLine);
-				
-			} catch (Exception e) {
-				cmdReturn=new CmdReturnType(ReturnCode.FAILURE, e.getMessage());
-			}
-
 			if (sessionCommonRef.getSessionTranscriptor()!=null) {
 				sessionCommonRef.getSessionTranscriptor().onCmdReturn(cmdReturn);
 			}

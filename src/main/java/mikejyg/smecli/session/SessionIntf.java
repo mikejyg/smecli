@@ -1,10 +1,7 @@
 package mikejyg.smecli.session;
 
-import java.io.IOException;
 import java.io.Reader;
 
-import mikejyg.smecli.CliLineReader.IllegalInputCharException;
-import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType;
 
 /**
@@ -16,7 +13,7 @@ import mikejyg.smecli.CmdReturnType;
 public interface SessionIntf {
 	public void setReader(Reader reader);
 	
-	public CmdReturnType execAll() throws IOException, UnexpectedEofException, IllegalInputCharException;
+	public CmdReturnType execAll();
 	
 	public SessionIntf newSubSession();
 	

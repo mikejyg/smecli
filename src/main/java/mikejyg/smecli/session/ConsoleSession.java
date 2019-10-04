@@ -6,8 +6,6 @@ import java.io.PrintWriter;
 import java.io.Reader;
 
 import mikejyg.smecli.CliAnnotation.CliCommand;
-import mikejyg.smecli.CliLineReader.IllegalInputCharException;
-import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CliUtils;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
@@ -101,7 +99,7 @@ public class ConsoleSession implements SessionIntf {
 	}
 	
 	@Override
-	public CmdReturnType execAll() throws IOException, UnexpectedEofException, IllegalInputCharException {
+	public CmdReturnType execAll() {
 		return session.execAll();
 	}
 	
@@ -174,10 +172,8 @@ public class ConsoleSession implements SessionIntf {
 	/**
 	 * run an interactive session (fron stdin).
 	 * @throws IOException
-	 * @throws UnexpectedEofException
-	 * @throws IllegalInputCharException
 	 */
-	public static void runInteractive(ConsoleSession cli) throws IOException, UnexpectedEofException, IllegalInputCharException {
+	public static void runInteractive(ConsoleSession cli) throws IOException {
 		try (InputStreamReader reader = new InputStreamReader(System.in) ) {
 			cli.setReader( reader );
 			cli.setInteractiveFlag(true);

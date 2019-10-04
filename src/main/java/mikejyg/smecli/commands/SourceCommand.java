@@ -9,8 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 import mikejyg.smecli.CliAnnotation.CliCommand;
-import mikejyg.smecli.CliLineReader.IllegalInputCharException;
-import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CliUtils;
 import mikejyg.smecli.CmdCallType;
 import mikejyg.smecli.CmdReturnType;
@@ -38,14 +36,10 @@ public class SourceCommand {
 	 * source a sub-script file from the classpath.
 	 * @param cmdCall
 	 * @return
-	 * @throws FileNotFoundException
 	 * @throws IOException
-	 * @throws IllegalInputCharException
-	 * @throws UnexpectedEofException
-	 * @throws ExitAllSessions
 	 */
 	@CliCommand(shorthands= {"."}, helpString = "parameter: script_filename\texecute the script file in a new session.")
-	public CmdReturnType source(CmdCallType cmdCall) throws FileNotFoundException, IOException, IllegalInputCharException, UnexpectedEofException {
+	public CmdReturnType source(CmdCallType cmdCall) throws IOException {
 		String args[] = CliUtils.toArgs(cmdCall);
 		
 		if (args.length < 1) {

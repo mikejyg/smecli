@@ -7,8 +7,6 @@ import org.junit.Test;
 
 import mikejyg.cloep.ArgsParser;
 import mikejyg.cloep.ArgsParser.ParseException;
-import mikejyg.smecli.CliLineReader.IllegalInputCharException;
-import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 import mikejyg.smecli.cmdexecutor.CommandsCommandExecutor;
 import mikejyg.smecli.session.ConsoleSession;
@@ -105,10 +103,8 @@ public class CliRemoteTest {
 	 * 
 	 * @throws InterruptedException
 	 * @throws IOException
-	 * @throws IllegalInputCharException
-	 * @throws UnexpectedEofException
 	 */
-	public void runInteractive() throws InterruptedException, IOException, IllegalInputCharException, UnexpectedEofException {
+	public void runInteractive() throws InterruptedException, IOException {
 		// create a command execution server
 		SocketCliThread socketCliThread = startServer(new CommandsCommandExecutor(), 0);
 

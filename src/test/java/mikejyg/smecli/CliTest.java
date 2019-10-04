@@ -16,8 +16,6 @@ import org.junit.Test;
 
 import mikejyg.cloep.ArgsParser;
 import mikejyg.cloep.ArgsParser.ParseException;
-import mikejyg.smecli.CliLineReader.IllegalInputCharException;
-import mikejyg.smecli.CliLineReader.UnexpectedEofException;
 import mikejyg.smecli.CmdReturnType.ReturnCode;
 import mikejyg.smecli.cmdexecutor.CommandExecutorIntf;
 import mikejyg.smecli.session.ConsoleSession;
@@ -54,7 +52,7 @@ public class CliTest {
 	//////////////////////////////////////////////////////////////////////////
 
 	@Test
-	public void test() throws IOException, IllegalInputCharException, UnexpectedEofException {
+	public void test() throws IOException {
 		ConsoleSession consoleSession = SessionFactory.buildLoadedConsoleSession();
 		
 		final String outputFilename="cliTest.out";
